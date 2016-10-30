@@ -10,13 +10,20 @@
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 
 def main():
     # my code here
-    graph = generate_graph(4,2,55);
+    m_0 = 4
+    m = 2
+    t = 1000
+    
+    graph = generate_graph(4,2,1000);
     print_graph(graph)
-    plot_graph(graph,graph_layout='spring')
+    #plot_graph(graph,graph_layout='spring')
+    plot_graph_degree(graph,m_0,m)
+    
     return
 
 """
@@ -77,7 +84,10 @@ def plot_graph(g,labels=None, graph_layout='shell',
                edge_color='blue', edge_alpha=0.3, edge_tickness=1,
                edge_text_pos=0.3,
                text_font='sans-serif'):
-                   
+         
+    plt.figure(1)
+    plt.title('Graficzne przedstawienie grafu')
+    
     G = nx.Graph()
     
     for k, v in g.items():
@@ -104,10 +114,40 @@ def plot_graph(g,labels=None, graph_layout='shell',
                            alpha=edge_alpha,edge_color=edge_color)
     nx.draw_networkx_labels(G, graph_pos,font_size=node_text_size,
                             font_family=text_font)
-            
+           
     plt.show()
     return
 
+
+def plot_graph_degree(g,m_0,m):
+    
+    max_degree = 0
+    for k, v in g.items():
+        if len(v) > max_degree:
+            max_degree = len(v)
+    
+    plt.figure(2)
+    plt.title('Rozkład stopni wierzchołków P(k) w sieci BA z parametrem m=%d' % m)
+    plt.ylabel('P(k)')
+    plt.xlabel('k')
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.grid(True)
+    
+    # rozklad referencyjny:
+    x = np.arange(1,max_degree+1)
+    y = [0 for i in range(max_degree)]
+    for x_i in x:
+        y[x_i - 1] = (2 * m * m / (x_i * x_i * x_i))
+    plt.plot(x, y, label="rozkład referencyjny", linewidth=2)
+    
+    # rozklad rzeczywisty:
+    # TODO
+    
+    # pokaz:
+    plt.legend(loc=1)
+    plt.show()
+    return
 
 if __name__ == "__main__":
     main()

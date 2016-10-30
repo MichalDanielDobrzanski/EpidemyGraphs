@@ -5,7 +5,7 @@ System GIS, putty, ubuntu, firefox:
 http://collaboradev.com/2011/08/03/browsing-the-web-through-an-ssh-tunnel-putty-firefox/
 
 Świat sieci złożonych:
-		http://eczyt.bg.pw.edu.pl/han/ibuk/libra.ibuk.pl/book/1751
+http://eczyt.bg.pw.edu.pl/han/ibuk/libra.ibuk.pl/book/1751
 
 Strony:
 2. - 17-66
