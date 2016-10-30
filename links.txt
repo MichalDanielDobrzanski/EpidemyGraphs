@@ -27,3 +27,6 @@ http://stackoverflow.com/questions/627435/how-to-remove-an-element-from-a-list-b
 http://stackoverflow.com/questions/1024847/add-key-to-a-dictionary-in-python
 http://stackoverflow.com/questions/20181899/how-to-make-each-key-value-of-a-dictionary-print-on-a-new-line
 
+
+Rysowanie grafów:
+https://www.udacity.com/wiki/creating-network-graphs-with-python#!#creating-network-graphs-with-python
