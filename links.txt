@@ -1,0 +1,29 @@
+https://docs.google.com/document/d/1L999z1gnYQVlwFxx_rUEsfTDzDnB8Q94haiUHAgyAEA/edit
+
+
+System GIS, putty, ubuntu, firefox:
+http://collaboradev.com/2011/08/03/browsing-the-web-through-an-ssh-tunnel-putty-firefox/
+
+Świat sieci złożonych:
+		http://eczyt.bg.pw.edu.pl/han/ibuk/libra.ibuk.pl/book/1751
+
+Strony:
+2. - 17-66
+4. - 156-174
+5.4. - 255-271
+
+
+Sprawozdanie 1:
+https://www.overleaf.com/6800723ncrpyv
+
+How to pick an item by its probability?:
+http://stackoverflow.com/questions/9330394/how-to-pick-an-item-by-its-probability
+
+
+Python:
+https://www.python.org/doc/essays/graphs/
+http://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+http://stackoverflow.com/questions/627435/how-to-remove-an-element-from-a-list-by-index-in-python
+http://stackoverflow.com/questions/1024847/add-key-to-a-dictionary-in-python
+http://stackoverflow.com/questions/20181899/how-to-make-each-key-value-of-a-dictionary-print-on-a-new-line
+
