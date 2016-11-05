@@ -1,3 +1,4 @@
+Egzamin:
 https://docs.google.com/document/d/1L999z1gnYQVlwFxx_rUEsfTDzDnB8Q94haiUHAgyAEA/edit
 
 
@@ -30,3 +31,7 @@ http://stackoverflow.com/questions/20181899/how-to-make-each-key-value-of-a-dict
 
 Rysowanie grafów:
 https://www.udacity.com/wiki/creating-network-graphs-with-python#!#creating-network-graphs-with-python
+
+Zwykłe rysowanie:
+http://matplotlib.org/users/pyplot_tutorial.html
+
