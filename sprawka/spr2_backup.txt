@@ -1,0 +1,117 @@
+\input{style.tex}
+
+\title{Teoria grafów w modelowaniu epidemii}
+\subtitle{Sprawozdanie 2}
+\author{%
+	Michał Dobrzański\\
+	\texttt{\href{mailto:mdobrzan@mion.elka.pw.edu.pl}%
+		{\nolinkurl{mdobrzan@mion.elka.pw.edu.pl}}}
+	\and
+	Maciej Janusz Krajsman\\
+	\texttt{\href{mailto:M.Krajsman@stud.elka.pw.edu.pl}%
+		{\nolinkurl{M.Krajsman@stud.elka.pw.edu.pl}}}
+}
+\supervisor{mgr inż. Łukasz Błaszczyk}
+\university{Politechnika Warszawska}
+\faculty{Wydział Elektroniki i Technik Informacyjnych}
+\course{Grafy i Sieci}
+\coursecode{GIS}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+\section{Opis algorytmu generowania grafów losowych według modelu sieci Barabásiego-Albert}
+
+Do zrealizowania projektu potrzebny będzie algorytm generujący grafy losowe według \textbf{modelu sieci Barabasiego-Albert}. Utworzone sieci dzięki temu modelowi są nazywane sieciami przypadkowwymi ewoluującymi.
+
+Zaproponowana przez autorów \textbf{ewolucja sieci} rozumiana jako zmiany struktury sieci w kolejnych odstępach czasowych modelowana jest poprzez dołączanie nowych węzłów do istniejącej już sieci. 
+
+Procedura konstruowania sieci Barabasiego-Albert obejmuje następujące kroki:
+
+\begin{enumerate}
+\item Na początkowym etapie ewolucji (czyli w chwili $t = 0$) siecią nazywamy graf pełny (całkowicie połączony klaster węzłów) o rozmiarze: $m_0 >= 1$. W następnych krokach czasowych $t = 1,2,3,...$ do sieci dodawane są nowe węzły (jeden węzeł na jeden krok), które tworzą odpowiednio $m <= m_0  (m = const)$ połączeń (czyli krawędzi) do istniejących już wierzchołków sieci.
+\item Proces dodawania wierzchołków realizuje \textbf{regułę preferencyjnego dołączania}, która mówi o tym, że prawdopodobieństwo, że nowy wierzchołek utworzy połączenie do jednego ze starszych wierzchołków jest wprost proporcjonalne do stopnia wierzchołka starszego.
+\item Wzrost sieci kończony jest w dowolnej chwili t. W momencie zakończenia wzrostu sieć ma: \[N = t + m_0 \approx t \] wierzchołków (węzłów) oraz \[ E = mt + \binom{m_0}{2} \approx mt \] krawędzi.
+\end{enumerate}
+
+
+\section{Szczegółowy opis modelu SIS rozwoju epidemii}
+
+\textbf{Model SIS} opiera się na zestawie równań różniczkowych, które opisują \textbf{rozprzestrzenianie się chorób zakaźnych}. Służy do określania, czy dana choroba \textbf{zaniknie}, czy \textbf{ustali się} na konkretnym poziomie. Jest najbardziej ogólnym modelem matematycznym tego zjawiska --- nie uwzględnia np. przypadków nosicielstwa i uodpornienia, istnienia osobników w fazie utajonej choroby czy urodzeń chorych. Stan populacji w tym modelu opisany jest \textbf{tylko jedną zmienną (\textit{I})}, która reprezentuje liczbę osobników zainfekowanych. Założenia modelu są następujące:
+
+\begin{itemize} \itemsep0pt
+\item Jednostki mogą znajdować się w jednym z dwóch stanów:
+  \begin{description} \itemsep0pt
+  \item[S] \textit{(susceptible - ang. podatni)} --- jednostki są zdrowe, podatne na zakażenie.
+  \item[I] \textit{(infected - ang. zainfekowani)} --- jednostki są chore, mogą zakażać zdrowe jednostki.
+  \end{description}
+\item S(t) - liczba osobników podatnych (zdrowych), tj. liczba węzłów w stanie S w danej chwili czasowej $t$.
+\item I(t) - liczba jednostek zainfekowanych, tj. liczba węzłów w stanie I w danej chwili czasowej $t$.
+\item N - liczebność populacji, dla której $N = S(t) + I(t)$, Liczebność populacji jest stała, tj. $N = \textit{const.}$
+\item Do zakażenia (zmiany stanu węzła z $S$ na $I$ może dojść na skutek kontaktu jednostki zdrowej i chorej.
+\item $\beta$ - prawdopodobieństwo, że w pojedynczym kroku czasowym ($dt$) zdrowy osobnik zarazi się od chorego sąsiada.
+\item $\gamma$ - prawdopodobieństwo, że w pojedynczym kroku czasowym ($dt$) chory osobnik wyzdrowieje, tj. zmieni stan $ I \rightarrow S $.
+\item $\lambda$ - parametr określający \textbf{tempo rozprzestrzeniania się epidemii}. Jest to stosunek $\lambda = \beta / \gamma $.
+\item $\lambda_c$ - \textbf{wartość progowa tempa rozprzestrzeniania się epidemii}. Gdy tempo przekroczy tą wartość krytyczną, wówczas epidemia staje się powszechna i badana choroba nabiera charakteru endemicznego.
+\end{itemize}
+
+Dla sieci losowych, bezskalowych (BA) model SIS można opisywać za pomocą równania różniczkowego, określającego tempo zmiany w czasie liczby zarażonych węzłów o zadanym stopniu k. Przyjmuje się następujące założenia: \\
+
+\textcolor{red}{\Huge TODO \normalsize} \\
+
+\begin{itemize} \itemsep0pt
+\item $I_k(t)$ - liczba zainfekowanych węzłów o stopniu $k$.
+\item $S_k(t)$ - liczba podatnych węzłow o tym samym stopniu $k$
+\end{itemize}
+
+\begin{equation}
+\label{eq:dSdt}
+\frac{dS}{dt} = -\frac{\beta SI}{N}+\mu(N-S)+\gamma I
+\end{equation}
+
+\begin{equation}
+\label{eq:dIdt}
+\frac{dI}{dt} = \frac{\beta SI}{N}-\gamma I-\mu I
+\end{equation}
+
+Gdzie ($\ref{eq:dSdt}$) określa tempo zmian liczebności grupy S (zdrowych), a ($\ref{eq:dIdt}$) --- w grupie I (chorych).
+
+
+\section{Opis planu zastosowania grafów losowych do omawianego zagadnienia}
+
+Wygenerowane grafy losowe według modelu Barabasiego-Arbert posłużą za model badanej populacji. \textbf{Wierzchołkami} będziemy reprezentowali poszczególne osoby w danej populacji. \textbf{Krawędzie} będą przedstawiały natomiast relacje pomiędzy tymi osobami. Określamy, że dwa wierzchołki są sąsiednie, gdy mają wspólną krawędź grafu.
+
+\textbf{Siecią losową, bezskalową} (w zadanej chwili $t$ utworzoną według modelu BA) będziemy nazywać określoną populację o ustalonej liczości, która zostanie poddana modelowaniu zjawiska propagacji epidemii. 
+
+Wierzchołki grafu będą przechowywały informacje o stanie osoby - czy jest ona zdrowa (podatna), czy chora (zakażająca) według modelu SIS. Zostanie zastosowana reprezentacja grafu za pomocą listy wierzchołków wraz z odpowiadającymi im listami sąsiedztwa. Badanie rozwoju epidemii będzie bazowało na tej reprezentacji opisującej stan, w jakim się dany graf znajduje.
+
+\section{Podstawowe założenia implementowanego programu oraz projekt testów}
+
+Program zostanie zaimplementowany w środowisku Python. Do jego realizacji użyje się bibliotek niezbędne do rysowania wykresów oraz grafów.
+
+Przeprowadzi się następujące testy:
+\begin{enumerate}
+\item \textbf{Sprawdzenie poprawności} algorytmu generującego grafy losowe według\textbf{ modelu Barabasiego-Albert}:
+
+Wygnerowane sieci powinny cechować się potęgowym rozkładem stonia wierzchołka. Zostaną utworzone sieci losowe (o różnych parametrach $m_0$, $m$ oraz $t$. Ich rozkłady stopni wierzchołków zostaną przedstawione na wykresie. Prawidłowo utworzone sieci według modelu BA powinny charakteryzować się w przybliżeniu \textbf{potęgowm rozkładem stopnia wierzchołka}. Ten rozkład przybiera postać liniowego przebiegu na wykresie w skali podwójnie logarytmicznej. Na tym wykresie wartość nachylenia krzywej przekłada się na wartość wykładnika dla rozkładu potęgowego.
+
+\item Przeprowadzenie symulacji rozwoju epidemii według modelu SIS dla różnych parametrów.
+
+\end{enumerate}
+
+
+
+
+% \section{Literatura użyta do rozwiązania problemu}
+
+% Do powstania projektu i rozwiązania problemu posłużono się książką autorstwa A. Fronczak oraz P. Fronczak pod tytułem \textit{Świat sieci złożonych}, wydawnictwo PWN, rok 2009.
+
+% \Huge \textcolor{red}{Przed oddaniem przerobię na normalną bibliografię //MJK} \normalsize
+
+\clearpage
+\input{bibl}
+
+\end{document}
