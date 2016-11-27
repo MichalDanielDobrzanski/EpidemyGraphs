@@ -16,14 +16,15 @@ import random
 
 def main():
     # my code here
-    m_0 = 4
-    m = 2
-    t = 100
+    m_0 = 3
+    m = 3 # Warunek: m <= m_0
+    t = 3500
     
     graph = generate_graph(m_0, m, t)
-    print_graph(graph)
-    plot_graph(graph,graph_layout='spring')
-    plot_graph_degree(graph, m_0, m)
+    #print_graph(graph)
+    get_graph_degree(graph)
+    #plot_graph(graph,graph_layout='spring')
+    plot_graph_degree(graph, m_0, m, t)
     
     return
 
@@ -72,6 +73,23 @@ def pref_addition(g, m):
     new_node = {num_node: (0, marked)}
     g.update(new_node)
     return
+
+def get_graph_degree(g,print_deg=False):
+    # pobieram rozklad stopni wierzczholkow
+    max_degree = 0
+    for k, v in g.items():
+        degree = len(v[1])
+        if degree > max_degree:
+            max_degree = degree
+    
+    degrees = [0 for x in range(max_degree + 1)]
+    for k, v in g.items():
+        degree = len(v[1])
+        degrees[degree] += 1
+
+    if print_deg:
+        print(degrees)
+    return degrees
 
  
 # Utilities:
@@ -122,33 +140,46 @@ def plot_graph(g, labels=None, graph_layout='shell',
     return
 
 
-def plot_graph_degree(g, m_0, m):
+'''
+alpha - parametr dla rozkladu potegowego dla sieci bezskalowych
+ref_length - jak duze wzgledem rozkladu wierzcholkow P(k) maja byc dwa rozklady odniesienia
+'''
+def plot_graph_degree(g, m_0, m, t,alpha=3,ref_length=0.8):
     
-    max_degree = 0
-    for k, v in g.items():
-        if len(v[1]) > max_degree:
-            max_degree = len(v[1])
+    degrees = get_graph_degree(g)
+    # zamien rozklad na prawdopodobienstwa
+    degrees = [x / len(g) for x in degrees]
+    max_degree = len(degrees)
     
     plt.figure(2)
-    plt.title('Rozkład stopni wierzchołków P(k) w sieci BA z parametrem m=%d' % m)
+    plt.title('Rozkład stopni wierzchołków P(k) w sieci BA dla chwili t=%d' % t)
     plt.ylabel('P(k)')
     plt.xlabel('k')
     plt.yscale('log')
     plt.xscale('log')
     plt.grid(True)
     
-    # rozklad referencyjny:
-    x = np.arange(1, max_degree+1)
-    y = [0 for i in range(max_degree)]
+
+    # rozklady odniesienia:
+    offset = (int(max_degree * (1 - ref_length))) // 2
+    x = np.arange(offset, max_degree - offset)
+    y = [0 for i in range(max_degree - 2*offset)]
+    y_alpha = [0 for i in range(max_degree - 2*offset)]
     for x_i in x:
-        y[x_i - 1] = (2 * m * m / (x_i * x_i * x_i))
-    plt.plot(x, y, label="rozkład referencyjny", linewidth=2)
+        # rozklad referencyjny:
+        y[x_i - offset] = (2 * m * m / (x_i * x_i * x_i))
+        # rozklad potegowy:
+        y_alpha[x_i - offset] = pow(x_i,-1 * alpha)
+           
+    plt.plot(x, y, label="rozkład referencyjny", linewidth=2) 
+    plt.plot(x, y_alpha, label="rozkład potegowy o współczynniku alpha=%d" % alpha, linewidth=2) 
     
     # rozklad rzeczywisty:
-    # TODO
+    x = np.arange(0, max_degree)
+    plt.plot(x, degrees, label='rozkład P(k) dla m_0=%d, m=%d' % (m_0,m), linewidth=2, marker='o', ls='')
     
     # pokaz:
-    plt.legend(loc=1)
+    plt.legend(loc=3)
     plt.show()
     return
 
