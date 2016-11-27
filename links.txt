@@ -17,6 +17,9 @@ Strony:
 Sprawozdanie 1:
 https://www.overleaf.com/6800723ncrpyv
 
+Sprawozdanie 2:
+https://www.overleaf.com/6969513jfpjrswznyms#/23857417/
+
 How to pick an item by its probability?:
 http://stackoverflow.com/questions/9330394/how-to-pick-an-item-by-its-probability
 
@@ -35,3 +38,5 @@ https://www.udacity.com/wiki/creating-network-graphs-with-python#!#creating-netw
 Zwykłe rysowanie:
 http://matplotlib.org/users/pyplot_tutorial.html
 
+Tunelowanie się do berniego:
+sudo ssh mdobrzan@mion.elka.pw.edu.pl -L 80:berni.ire.pw.edu.pl:80
