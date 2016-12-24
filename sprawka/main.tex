@@ -1,0 +1,229 @@
+\input{style.tex}
+
+\title{Teoria grafów w~modelowaniu epidemii}
+\subtitle{Sprawozdanie 2}
+\author{%
+	Michał Dobrzański\\
+	\texttt{\href{mailto:mdobrzan@mion.elka.pw.edu.pl}%
+		{\nolinkurl{mdobrzan@mion.elka.pw.edu.pl}}}
+	\and
+	Maciej Janusz Krajsman\\
+	\texttt{\href{mailto:M.Krajsman@stud.elka.pw.edu.pl}%
+		{\nolinkurl{M.Krajsman@stud.elka.pw.edu.pl}}}
+}
+\supervisor{mgr inż. Łukasz Błaszczyk}
+\university{Politechnika Warszawska}
+\faculty{Wydział Elektroniki i~Technik Informacyjnych}
+\course{Grafy i~Sieci}
+\coursecode{GIS}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+\section{Szczegółowy opis merytoryczny zadania}
+\label{sec:szczegolowy_opis_merytoryczny_zadania}
+
+Zadaniem projektowym jest \textbf{zaimplementowanie modelu SIS} rozwoju epidemii, zbadanie jego właściwości na grafach modelujących populację ludzi, w~których wierzchołek odpowiada konkretnej osobie. Należy również porównać otrzymane wyniki z~modelem ciągłym dla epidemii opisanym równaniami różniczkowymi.  
+
+Zadanie będzie polegało na \textbf{wygenerowaniu odpowiednich grafów losowych}, a~następnie na uruchomieniu \textbf{algorytmu propagacji epidemii} (zgodnego z~modelem SIS) dla wierzchołków tych grafów.
+
+Otrzymane wyniki zostaną zestawione z~wynikami otrzymanymi za pomocą równań różniczkowych. Dla przejrzystości utworzone zostaną wykresy porównujące oba podejścia. Dobór prezentowanych parametrów dla osi wykresów zostanie określony w~trakcie tworzenia projektu.
+
+
+\section{Opis algorytmu generowania grafów losowych według modelu sieci Barabásiego-Albert}
+\label{sec:opis_alg_ba}
+
+Do zrealizowania projektu potrzebny będzie algorytm generujący grafy losowe według \textbf{modelu sieci Barabásiego-Albert}. Utworzone sieci dzięki temu modelowi są nazywane sieciami przypadkowymi ewoluującymi.
+
+Zaproponowana przez autorów \textbf{ewolucja sieci} rozumiana jako zmiany struktury sieci w~kolejnych odstępach czasowych modelowana jest poprzez dołączanie nowych węzłów do istniejącej już sieci. 
+
+Procedura konstruowania sieci Barabásiego-Albert obejmuje następujące kroki:
+
+\begin{enumerate}
+\item Na początkowym etapie ewolucji (czyli w~chwili $t = 0$) siecią nazywamy graf pełny (całkowicie połączony klaster węzłów) o~rozmiarze: $m_0 >= 1$. W~następnych krokach czasowych $t = 1,2,3,...$ do sieci dodawane są nowe węzły (jeden węzeł na jeden krok), które tworzą odpowiednio $m <= m_0  (m = const)$ połączeń (czyli krawędzi) do istniejących już wierzchołków sieci.
+\item Proces dodawania wierzchołków realizuje \textbf{regułę preferencyjnego dołączania}, która mówi o~tym, że prawdopodobieństwo, że nowy wierzchołek utworzy połączenie do jednego ze starszych wierzchołków jest wprost proporcjonalne do stopnia wierzchołka starszego.
+\item Wzrost sieci kończony jest w~dowolnej chwili t. W~momencie zakończenia wzrostu sieć ma: \[N = t + m_0 \approx t \] wierzchołków (węzłów) oraz \[ E = mt + \binom{m_0}{2} \approx mt \] krawędzi.
+\end{enumerate}
+
+
+\section{Szczegółowy opis modelu SIS rozwoju epidemii}
+\label{sec:szczegolowy_opis_modelu_sis_rozwoju_epidemii}
+
+\textbf{Model SIS} opiera się na zestawie równań różniczkowych, które opisują \textbf{rozprzestrzenianie się chorób zakaźnych}. Służy do określania, czy dana choroba \textbf{zaniknie}, czy \textbf{ustali się} na konkretnym poziomie. Jest najbardziej ogólnym modelem matematycznym tego zjawiska --- nie uwzględnia np. przypadków nosicielstwa i~uodpornienia, istnienia osobników w~fazie utajonej choroby czy urodzeń chorych. Stan populacji w~tym modelu opisany jest \textbf{tylko jedną zmienną (\textit{I})}, która reprezentuje liczbę osobników zainfekowanych.
+
+\subsection{Założenia modelu SIS}
+\label{subsec:zalozenia_modelu_sis}
+
+\begin{description} \itemsep0pt
+\item[$\bullet$] Jednostki mogą znajdować się w~jednym z~dwóch stanów:
+  \begin{description} \itemsep0pt
+  \item[S] \textit{(susceptible --- ang. podatni)} --- jednostki są zdrowe, podatne na zakażenie.
+  \item[I] \textit{(infected --- ang. zainfekowani)} --- jednostki są chore, mogą zakażać zdrowe jednostki.
+  \end{description}
+\item[S(t)] --- liczba osobników podatnych (zdrowych), tj. liczba węzłów w~stanie S w~danej chwili czasowej $t$.
+\item[I(t)] --- liczba jednostek zainfekowanych, tj. liczba węzłów w~stanie I~w~danej chwili czasowej $t$.
+\item[$\bullet$] Do zakażenia (zmiany stanu węzła z~$S$ na $I$ może dojść na skutek kontaktu jednostki zdrowej i~chorej.
+\item[N] --- liczebność populacji, dla której $N = S(t) + I(t)$, Liczebność populacji jest stała, tj. $N = \textit{const.}$
+
+\item[$\pmb{\beta}$] --- prawdopodobieństwo, że w~pojedynczym kroku czasowym ($dt$) zdrowy osobnik zakazi się od chorego sąsiada.
+\item[$\pmb{\gamma}$] --- prawdopodobieństwo, że w~pojedynczym kroku czasowym ($dt$) chory osobnik wyzdrowieje, tj. zmieni stan $ I~\rightarrow S $.
+\item[$\pmb{\lambda}$] --- parametr określający \textbf{tempo rozprzestrzeniania się epidemii}. Jest to stosunek $\lambda = \beta / \gamma $.
+\item[$\pmb{\lambda_c}$] --- \textbf{wartość progowa tempa rozprzestrzeniania się epidemii}. Gdy tempo przekroczy tą wartość krytyczną, wówczas epidemia ma szansę stać się powszechną, a~badana choroba nabrać charakteru endemicznego. Dla symulacji w~czasie nieograniczonym oznacza to endemię.
+
+\end{description}
+
+
+\subsection{Warunki początkowe}
+\label{subsec:warunki_poczatkowe}
+
+Dla sieci losowych oraz bezskalowych (BA) dzięki modelowi SIS można opisać propagację epidemii za pomocą równania różniczkowego określającego tempo zmiany w~czasie liczby zakażonych węzłów o~zadanym stopniu k. W~tym celu należy określić \textbf{warunki początkowe} epidemii, czyli w~chwili $t = 0$. Określa się:
+\begin{description} \itemsep0pt
+\item[P(k)] --- rozkład stopni wierzchołków otrzymany po wygenerowaniu grafu BA dla wszystkich wartości $k$.
+\item[$\pmb{\beta, \gamma}$] --- określone prawdopodobieństwa odpowiednio: zdrowy zostanie zakażony przez chorego, chory wyzdrowieje.
+\item[$\pmb{I_k(0)}$] --- początkowa liczba zainfekowanych węzłów o~stopniu $k$.
+\item[$\pmb{S_k(0)}$] --- początkowa liczba podatnych węzłów o~tym samym stopniu $k$.
+\end{description}
+
+Pytanie, jakie zadaje się przy modelowaniu epidemii najczęściej brzmi: Czy dla zadanych wartości parametrów $\beta$ i~$\lambda$ oraz dla zadanej początkowej liczby zainfekowanych osobników $i_0(0)$ infekcja rozprzestrzeni się czy nie?
+
+Ponadto dla sieci bezskalowych szuka się wartości parametru $\lambda_c$, czyli progu od którego epidemia może stać się powszechna w~danej populacji.
+
+\subsection{Równania różniczkowe opisujące model}
+\label{subsec:rownania_rozniczkowe_opisujace_model}
+
+Oprócz wcześniej wymienionych parametrów dla modelu SIS w~sieciach bezskalowych określa się prawdopodobieństwo, że dowolna krawędź grafu prowadzi do węzła, który przechowuje stan o~wartości ,,chory''.
+
+\begin{equation}
+\label{eq:q_i}
+Q_I = \sum_{k} Q(k) i_k
+\end{equation}
+Gdzie:
+\begin{description} \itemsep0pt
+\item[k] --- stopień wierzchołka.
+\item[$\pmb{Q_I}$] --- prawdopodobieństwo, że dowolna krawędź grafu prowadzi do węzła, który przechowuje stan o~wartości ,,chory''
+\item[$\pmb{Q(k)}$] --- prawdopodobieństwo, że dowolna krawędź grafu prowadzi do węzła o~stopniu $k$, który przechowuje stan o~wartości ,,chory''.
+\item[$\pmb{i_k}$] --- prawdopodobieństwo, że węzeł o~stopniu $k$ przechowuje stan o~wartości ,,chory''.
+\end{description}
+
+Wartość $Q(k)$ można dla danej sieci powiązań dla danej populacji wyliczyć z~następującego wzoru:
+\begin{equation}
+\label{eq:q_k}
+Q(k) = \frac{k}{\langle k \rangle}P(k)
+\end{equation}
+Gdzie:
+\begin{description} \itemsep0pt
+\item[k] --- stopień wierzchołka.
+\item[$\pmb{\langle k \rangle}$] --- gęstość sieci. Średni stopień losowo wybranego wierzchołka.
+\end{description}
+
+W przypadku sieci BA o~tworzeniu połączeń w~sieci nie decyduje żadne z~góry narzucone prawo, jej \textbf{struktura zależy od indywidualnych decyzji jej elementów} (kto kogo poznał, kto się z~kim widuje). W~rezultacie otrzymujemy \textbf{potęgowy rozkład stopni wierzchołków}, w~którym w~bliskim sąsiedztwie mogą występować wierzchołki o~ogromnej liczbie incydentnych krawędzi oraz te niemalże odizolowane od reszty sieci. Ze względu na potęgowy rozkład stopni wierzchołków, wyniki byłyby niewłaściwe. Równania korzystające ze średniego stopnia \emph{$\langle k \rangle$} ilustrują dynamikę układu zawierającego same wierzchołki o~średnim stopniu. W~opisie dynamiki sieci BA należy więc stosować równania dotyczące wierzchołków o~\textbf{zadanym stopniu \emph{k}}.
+
+Tempo zmiany osobników zainfekowanych (węzłów o~zadanym stopniu $k$) $I_k(t)$ opisuje się następująco:
+
+\begin{equation}
+\label{eq:dii_k}
+\frac{dI_k(t)}{dt} = [\beta k Q_I]S_k(t) - \gamma I_k(t)
+\end{equation}
+
+Można również wyliczać tempo zmiany prawdopodobieństwa, że konkretny osobnik (węzeł o~zadanym stopniu $k$) jest zainfekowany:
+\begin{equation}
+\label{eq:di_k}
+\frac{di_k(t)}{dt} = [\beta k Q_I]s_k(t) - \gamma i_k(t);~~i_k(t) + s_k(t) = 1
+\end{equation}
+% Gdzie: $$
+% \begin{itemize} \itemsep0pt
+% \item 
+% \end{itemize}
+
+Szczególnie interesujący jest przypadek graniczny, dla $\displaystyle i_k =  \lim_{t\to\infty} i_k(t)$:
+\begin{equation}
+\label{eq:i_k_infty}
+i_k = \frac{\lambda k Q_I}{1+\lambda k Q_I}
+\end{equation}
+Zgodnie z~zapisem w~sekcji \ref{subsec:zalozenia_modelu_sis}, parametr $\lambda = \beta / \gamma $ określa tempo rozprzestrzeniania się epidemii.
+W powyższym równaniu (\ref{eq:i_k_infty}) określone zostało prawdopodobieństwo że węzeł o~stopniu \emph{k} jest w~stanie \emph{I} (jest zakażony) w~czasie nieskończonym, czyli po zakończeniu symulacji. Wyzerowanie $i_k$ zależy od $Q_I$, ponieważ \emph{k} jest dodatnią liczbą naturalną, a~$\lambda > 0$.
+% Możemy dzięki temu stwierdzić, czy badana choroba utrzymuje się na stałym poziomie, czy zanika. 
+By wykonywać obliczenia dla wszystkich stopni \emph{k}, należy zsumować obliczenia dla każdego z~nich. Z~wzorów (\ref{eq:q_i}), (\ref{eq:q_k}) i~ (\ref{eq:i_k_infty}) wynika, że:
+
+\begin{equation}
+\label{eq:q_i}
+Q_I = \sum_{k}Q(k)i_k = 1 - \frac{1}{\langle k \rangle}\sum_{k}P(k)\frac{k}{1+\lambda k Q_I} = f(Q_I)
+\end{equation}
+Gdzie:
+\begin{description} \itemsep0pt
+\item[k] --- stopień wierzchołka.
+\item[$\pmb{f(Q_I)}$] --- funkcja rozkładu prawdopodobieństwa przechowywania stanu ,,chory'' przez węzły o~różnych stopniach.
+\end{description}
+Powyższe równanie może mieć jedno lub dwa rozwiązania. Jednym jest zawsze $Q_I = 0$ (dla $i_k = 0$). Obecność drugiego rozwiązania świadczy o~tym, że losowo wybrana krawędź prowadzi do zainfekowanego wierzchołka. Epidemia może się swobodnie rozwijać, więc $\lambda > \lambda_c$. Dzięki temu, warunek:
+
+\begin{equation}
+\label{eq:q_i_mt_one}
+\left.\frac{df(Q_I)}{dQ_I}\right|_{Q_I=0} > 1
+\end{equation}
+
+umożliwia wyznaczenie $\lambda_c$. By funkcja (\ref{eq:q_i}) spełniała warunek (\ref{eq:q_i_mt_one}):
+
+\begin{equation}
+\label{eq:q_i_mt_one_q_i}
+\left.\frac{df(Q_I)}{dQ_I}\right|_{Q_I=0} = \left.\frac{1}{\langle k \rangle}\sum_{k}P(k)\frac{\lambda k^2}{(1+\lambda k Q_I)^2}\right|_{Q_I=0} = \frac{\lambda}{\langle k \rangle}\sum_{k}k^2P(k) = \lambda\frac{k^2}{k} > 1 
+\end{equation}
+
+Więc:
+\begin{equation}
+\label{eq:lambda_c}
+\lambda_c = \frac{\langle k \rangle}{\langle k^2 \rangle}
+\end{equation}
+
+
+Okazuje się, że w~sieciach bezskalowych wartość parametru $\lambda_c$ jest bardzo zbliżona do zera. W~praktyce powinno to oznaczać, że powstrzymanie rozwoju epidemii jest prawie niewykonalne.
+
+
+% \begin{equation}
+% \label{eq:dSdt}
+% \frac{dS}{dt} = -\frac{\beta SI}{N}+\mu(N-S)+\gamma I
+% \end{equation}
+
+% \begin{equation}
+% \label{eq:dIdt}
+% \frac{dI}{dt} = \frac{\beta SI}{N}-\gamma I-\mu I
+% \end{equation}
+
+% Gdzie ($\ref{eq:dSdt}$) określa tempo zmian liczebności grupy S (zdrowych), a~($\ref{eq:dIdt}$) --- w~grupie I~(chorych).
+
+
+\section{Opis planu zastosowania grafów losowych do omawianego zagadnienia}
+\label{sec:opis_planu_zastosowania_grafow_losowych}
+
+Wygenerowane grafy losowe według modelu Barabasiego-Arbert posłużą za model badanej populacji. \textbf{Wierzchołkami} będziemy reprezentowali poszczególne osoby w~danej populacji. \textbf{Krawędzie} będą przedstawiały natomiast relacje pomiędzy tymi osobami. Określamy, że dwa wierzchołki są sąsiednie, gdy mają wspólną krawędź grafu.
+
+\textbf{Siecią losową, bezskalową} (w zadanej chwili $t$ utworzoną według modelu BA) będziemy nazywać określoną populację o~ustalonej liczności, która zostanie poddana modelowaniu zjawiska propagacji epidemii. 
+
+Wierzchołki grafu będą przechowywały informacje o~stanie osoby --- czy jest ona zdrowa (podatna), czy chora (zakażająca) według modelu SIS. Zostanie zastosowana reprezentacja grafu za pomocą listy wierzchołków wraz z~odpowiadającymi im listami sąsiedztwa. Badanie rozwoju epidemii będzie bazowało na tej reprezentacji opisującej stan, w~jakim się dany graf znajduje.
+
+\section{Podstawowe założenia implementowanego programu oraz projekt testów}
+\label{sec:podstawowe_zalozenia_programu}
+
+Program zostanie zaimplementowany w~środowisku Python. Do jego realizacji użyje się bibliotek niezbędne do rysowania wykresów oraz grafów.
+
+\textbf{Struktura grafu} będzie reprezentowana za pomocą listy sąsiedztwa. Dodatkowo w~niej dla każdego wierzchołka umieści się dodatkową informacją o~jego aktualnym stanie ($S$ lub $I$ według modelu SIS). W~środowisku Python będzie to słownik tworzony za pomocą konstruktora \textit{dict()}. Badanie algorytmu propagacji epidemii sprowadzi się do przechodzenia po listach sąsiedztwa i~zmianach stanów dla wierzchołków.
+
+W implementowanym programie przeprowadzone zostaną następujące testy:
+\begin{enumerate}
+\item Sprawdzenie poprawności algorytmu generującego grafy losowe według modelu sieci Barabasiego-Albert:
+
+Zostaną wygenerowane sieci losowe BA (o różnych parametrach $m_0$, $m$ oraz $t$. Ich rozkłady stopni wierzchołków zostaną przedstawione na wykresie. Prawidłowo utworzone sieci według modelu BA powinny charakteryzować się w~przybliżeniu \textbf{potęgowym rozkładem stopnia wierzchołka}. Ten rozkład przybiera postać liniowego przebiegu na wykresie w~skali podwójnie logarytmicznej. Na tym wykresie wartość nachylenia krzywej przekłada się na wartość wykładnika dla rozkładu potęgowego. W~programie utworzony zostanie taki wykres i~przedstawione na nim będzie kilka przykładowych rozkładów dla różnych sieci losowych BA.
+
+\item Przeprowadzenie symulacji rozwoju epidemii według modelu SIS dla różnych parametrów:
+
+Następnie dla wcześniej wygenerowanych sieci losowych przeprowadzona zostanie symulacja rozwoju epidemii. Dla każdej sieci utworzone będzie kilka różnych warunków początkowych (odpowiednia liczba wierzchołków w~stanie $S$ i~$I$ w~chwili $t_0$, różne parametry $\gamma$, $\beta$). Następnie dla kolejnych chwil $t = 1,2,3,...$ będzie badany rozwój epidemii. Najistotniejszy jest wynik dla $t\to\infty$, ponieważ opisuje stan końcowy układu. Wyniki porównane zostaną ze spodziewanym rezultatem otrzymanym z~równań opisujących model SIS. Sprawdzone zostanie również, jak model zachowuje się dla $\lambda > \lambda_c$ oraz $\lambda < \lambda_c$ (w tym celu graf nie może być za mały, a~wartości $\lambda_c$ i~tak będą bardzo niewielkie, ze względu na potęgowy rozkład stopni wierzchołków grafu). 
+
+
+\end{enumerate}
+
+\clearpage
+\input{bibl}
+
+\end{document}
