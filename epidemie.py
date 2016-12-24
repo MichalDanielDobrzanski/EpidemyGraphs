@@ -139,26 +139,59 @@ def plot_graph(g, labels=None, graph_layout='shell',
     plt.show()
     return
 
+'''
+usrednianie rozkladu stopnia wierzcholka na podstawie kilku grafow
+'''
+def average_graph_degree(degrees,n_graphs,m_0, m, t):
+    if n_graphs > 1:
+        for i in range(n_graphs):
+            gr = generate_graph(m_0, m, t)
+            degs = get_graph_degree(gr)
+            degs = [x / len(gr) for x in degs]
+
+            # wybierz wiekszy rozklad
+            l_degs = s_degs = []
+            if len(degs) > len(degrees):
+                l_degs = degs
+                s_degs = degrees
+            else:
+                l_degs = degrees
+                s_degs = degs
+
+            # iteruj po wiekszym
+            for i in range(len(s_degs)):
+                l_degs[i] += s_degs[i]
+
+            degrees = l_degs
+
+        degrees = [x / n_graphs for x in degrees]
+
+    return degrees
 
 '''
+graphs - usrednianie rozkładu dla takiej ilosci grafow
 alpha - parametr dla rozkladu potegowego dla sieci bezskalowych
 ref_length - jak duze wzgledem rozkladu wierzcholkow P(k) maja byc dwa rozklady odniesienia
 '''
-def plot_graph_degree(g, m_0, m, t,alpha=3,ref_length=0.8):
-    
-    degrees = get_graph_degree(g)
-    # zamien rozklad na prawdopodobienstwa
-    degrees = [x / len(g) for x in degrees]
-    max_degree = len(degrees)
+def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3,ref_length=0.8):
     
     plt.figure(2)
-    plt.title('Rozkład stopni wierzchołków P(k) w sieci BA dla chwili t=%d' % t)
+    plt.title(r'Rozkład stopni wierzchołków P(k) w sieci BA dla chwili $t=%d$' % t)
     plt.ylabel('P(k)')
     plt.xlabel('k')
     plt.yscale('log')
     plt.xscale('log')
     plt.grid(True)
-    
+
+    degrees = get_graph_degree(g)
+    # zamien rozklad na prawdopodobienstwa
+    degrees = [x / len(g) for x in degrees]
+
+    # usrednianie:
+    if n_graphs > 1:
+        degrees = average_graph_degree(degrees,n_graphs,m_0, m, t)
+
+    max_degree = len(degrees)
 
     # rozklady odniesienia:
     offset = (int(max_degree * (1 - ref_length))) // 2
@@ -171,12 +204,15 @@ def plot_graph_degree(g, m_0, m, t,alpha=3,ref_length=0.8):
         # rozklad potegowy:
         y_alpha[x_i - offset] = pow(x_i,-1 * alpha)
            
-    plt.plot(x, y, label="rozkład referencyjny", linewidth=2) 
-    plt.plot(x, y_alpha, label="rozkład potegowy o współczynniku alpha=%d" % alpha, linewidth=2) 
+    plt.plot(x, y, label=r'rozkład referencyjny $(\frac{2*m^2}{k^3})$', linewidth=2) 
+    plt.plot(x, y_alpha, label=r'rozkład potegowy o współczynniku $\alpha=%d$' % alpha, linewidth=2) 
     
     # rozklad rzeczywisty:
     x = np.arange(0, max_degree)
-    plt.plot(x, degrees, label='rozkład P(k) dla m_0=%d, m=%d' % (m_0,m), linewidth=2, marker='o', ls='')
+    label_deg = r'rozkład $P(k)$ dla $m_0=%d$, $m=%d$' % (m_0,m)
+    if n_graphs > 1:
+    	label_deg = (r'Usredniony po $%d$ ' % n_graphs) + label_deg
+    plt.plot(x, degrees, label=label_deg, linewidth=2, marker='o', ls='')
     
     # pokaz:
     plt.legend(loc=3)
