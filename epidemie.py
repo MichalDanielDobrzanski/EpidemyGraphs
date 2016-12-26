@@ -28,12 +28,16 @@ def main():
 
     graph = generate_graph(m_0, m, t)
     # print_graph(graph)
-    get_graph_degree(graph, True)
-    # plot_graph(graph,graph_layout='spring')
-    plot_graph_degree(graph, m_0, m, t)
+    degree = get_graph_degree(graph, True)
+    infected_vect = [i_k0 for d in degree] # warunek poczatkowy
 
-    sis = calculate_sis(i_k0, beta, gamma, t, graph)
-    print(sis)
+
+    # plot_graph(graph,graph_layout='spring')
+    # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
+
+    t_0 = 10
+    sis = calculate_sis(infected_vect, beta, gamma, t_0, graph, degree)
+    print('prawdop. ze wezel o stopniu k bedzie zarazony w chwili t=',t_0,': ',sis)
 
 
     return
@@ -100,6 +104,7 @@ def get_graph_degree(g, print_deg=False):
 
     if print_deg:
         print(degrees)
+
     return degrees
 
  
@@ -160,7 +165,8 @@ def average_graph_degree(degrees, n_graphs, m_0, m, t):
         for i in range(n_graphs):
             gr = generate_graph(m_0, m, t)
             degs = get_graph_degree(gr)
-            degs = [x / len(gr) for x in degs]
+            # zamien rozklad na prawdopodobienstwa
+            degs = [x / sum(degs) for x in degs]
 
             # wybierz wiekszy rozklad
             l_degs = s_degs = []
@@ -171,7 +177,7 @@ def average_graph_degree(degrees, n_graphs, m_0, m, t):
                 l_degs = degrees
                 s_degs = degs
 
-            # iteruj po wiekszym
+            # iteruj po mniejszym
             for i in range(len(s_degs)):
                 l_degs[i] += s_degs[i]
 
@@ -200,11 +206,11 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
 
     degrees = get_graph_degree(g)
     # zamien rozklad na prawdopodobienstwa
-    degrees = [x / len(g) for x in degrees]
+    degrees = [x / sum(degrees) for x in degrees]
 
     # usrednianie:
-    # if n_graphs > 1:
-    #     degrees = average_graph_degree(degrees, n_graphs, m_0, m, t)
+    if n_graphs > 1:
+        degrees = average_graph_degree(degrees, n_graphs, m_0, m, t)
 
     max_degree = len(degrees)
 
@@ -235,31 +241,47 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     return
 
 
-def calculate_sis(i_k, beta, gamma, t_max, graph):
+def calculate_sis(i_k, beta, gamma, t_max, graph, degrees):
     # Q_I = suma (Q(k)*i_k) # r-nie 1
     # Q(k) = k*P(k)/k_med # r-nie 2
     # Q_I = suma (k*P(k)/k_med)*i_k # r-nie 1+2
     # P(k) = get_graph_degree(graph)[k]/k_sum
 
     # [a, b, c]*[A, B, C] = [aA, bB, cC] -> rozkład * [0, 1, 2, ... max_degree]
-    q_i = 0
-    infected = []
-    k_sum = sum(get_graph_degree(graph))
-    k_med = sum(get_graph_degree(graph) * np.arange(len(get_graph_degree(graph)))) / \
-        sum(np.arange(len(get_graph_degree(graph))))
+    # q_i_k = []
+
+    s_k = [0 for i in i_k]
+
+    k_sum = sum(degrees)
+    print('ksum=',k_sum)
+    k_med = sum(degrees) / len(degrees)
+    print('kmed=',k_med)
 
     for t in np.arange(t_max):
-        s_k = 1 - i_k
-        dikdt_tab = []  # ---
-        for k in np.arange(len(get_graph_degree(graph))):
-            q_i += ((k/k_med)*(get_graph_degree(graph)[k]/k_sum))*i_k  # r-nie 1+2
-            dikdt = (beta*k*q_i)*s_k-gamma*i_k  # r-nie 4
-            dikdt_tab.append(dikdt)  # i_k += dikdt
+        #s_k = 1 - i_k
+        # print('s_k:',s_k)
 
-        i_k = sum(dikdt_tab)  # ---
-        infected.append(i_k)
+        dikdt_tab = [0 for i in i_k]  # wektor pochodnych
+        for k in range(len(degrees)):
+            s_k[k] = 1 - i_k[k]
+            # print('s_k:',s_k)
+            q_i_k = (k/k_med)*degrees[k]*i_k[k]  # r-nie 1+2
+            dikdt = (beta*k*q_i_k)*s_k[k]-gamma*i_k[k]  # r-nie 4
+            dikdt_tab[k] = dikdt
+        # print('wektor pochodnych dla t=',t,':',dikdt_tab)
 
-    return infected
+        # update pochodnych:
+        for k in range(len(degrees)):
+            added = i_k[k] + dikdt_tab[k]
+            if added > 1:
+                i_k[k] = 1
+            elif added < 0:
+                i_k[k] = 0
+            else:
+                i_k[k] += dikdt_tab[k]
+
+
+    return i_k
 
 if __name__ == "__main__":
     main()
