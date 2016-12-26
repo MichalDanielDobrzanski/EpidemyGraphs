@@ -15,17 +15,27 @@ import random
 
 
 def main():
-    # my code here
+
+    # generowanie grafu
     m_0 = 3
-    m = 3 # Warunek: m <= m_0
+    m = 3  # Warunek: m <= m_0
     t = 3500
-    
+
+    # parametry modelu SIS
+    i_k0 = 0.01
+    beta = 0.03
+    gamma = 0.05
+
     graph = generate_graph(m_0, m, t)
-    #print_graph(graph)
-    get_graph_degree(graph)
-    #plot_graph(graph,graph_layout='spring')
+    # print_graph(graph)
+    get_graph_degree(graph, True)
+    # plot_graph(graph,graph_layout='spring')
     plot_graph_degree(graph, m_0, m, t)
-    
+
+    sis = calculate_sis(i_k0, beta, gamma, t, graph)
+    print(sis)
+
+
     return
 
 """
@@ -74,7 +84,8 @@ def pref_addition(g, m):
     g.update(new_node)
     return
 
-def get_graph_degree(g,print_deg=False):
+
+def get_graph_degree(g, print_deg=False):
     # pobieram rozklad stopni wierzczholkow
     max_degree = 0
     for k, v in g.items():
@@ -142,7 +153,9 @@ def plot_graph(g, labels=None, graph_layout='shell',
 '''
 usrednianie rozkladu stopnia wierzcholka na podstawie kilku grafow
 '''
-def average_graph_degree(degrees,n_graphs,m_0, m, t):
+
+
+def average_graph_degree(degrees, n_graphs, m_0, m, t):
     if n_graphs > 1:
         for i in range(n_graphs):
             gr = generate_graph(m_0, m, t)
@@ -173,7 +186,9 @@ graphs - usrednianie rozkładu dla takiej ilosci grafow
 alpha - parametr dla rozkladu potegowego dla sieci bezskalowych
 ref_length - jak duze wzgledem rozkladu wierzcholkow P(k) maja byc dwa rozklady odniesienia
 '''
-def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3,ref_length=0.8):
+
+
+def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     
     plt.figure(2)
     plt.title(r'Rozkład stopni wierzchołków P(k) w sieci BA dla chwili $t=%d$' % t)
@@ -188,8 +203,8 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3,ref_length=0.8):
     degrees = [x / len(g) for x in degrees]
 
     # usrednianie:
-    if n_graphs > 1:
-        degrees = average_graph_degree(degrees,n_graphs,m_0, m, t)
+    # if n_graphs > 1:
+    #     degrees = average_graph_degree(degrees, n_graphs, m_0, m, t)
 
     max_degree = len(degrees)
 
@@ -202,22 +217,49 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3,ref_length=0.8):
         # rozklad referencyjny:
         y[x_i - offset] = (2 * m * m / (x_i * x_i * x_i))
         # rozklad potegowy:
-        y_alpha[x_i - offset] = pow(x_i,-1 * alpha)
+        y_alpha[x_i - offset] = pow(x_i, -1 * alpha)
            
     plt.plot(x, y, label=r'rozkład referencyjny $(\frac{2*m^2}{k^3})$', linewidth=2) 
     plt.plot(x, y_alpha, label=r'rozkład potegowy o współczynniku $\alpha=%d$' % alpha, linewidth=2) 
     
     # rozklad rzeczywisty:
     x = np.arange(0, max_degree)
-    label_deg = r'rozkład $P(k)$ dla $m_0=%d$, $m=%d$' % (m_0,m)
+    label_deg = r'rozkład $P(k)$ dla $m_0=%d$, $m=%d$' % (m_0, m)
     if n_graphs > 1:
-    	label_deg = (r'Usredniony po $%d$ ' % n_graphs) + label_deg
+        label_deg = (r'Usredniony po $%d$ ' % n_graphs) + label_deg
     plt.plot(x, degrees, label=label_deg, linewidth=2, marker='o', ls='')
     
     # pokaz:
     plt.legend(loc=3)
     plt.show()
     return
+
+
+def calculate_sis(i_k, beta, gamma, t_max, graph):
+    # Q_I = suma (Q(k)*i_k) # r-nie 1
+    # Q(k) = k*P(k)/k_med # r-nie 2
+    # Q_I = suma (k*P(k)/k_med)*i_k # r-nie 1+2
+    # P(k) = get_graph_degree(graph)[k]/k_sum
+
+    # [a, b, c]*[A, B, C] = [aA, bB, cC] -> rozkład * [0, 1, 2, ... max_degree]
+    q_i = 0
+    infected = []
+    k_sum = sum(get_graph_degree(graph))
+    k_med = sum(get_graph_degree(graph) * np.arange(len(get_graph_degree(graph)))) / \
+        sum(np.arange(len(get_graph_degree(graph))))
+
+    for t in np.arange(t_max):
+        s_k = 1 - i_k
+        dikdt_tab = []  # ---
+        for k in np.arange(len(get_graph_degree(graph))):
+            q_i += ((k/k_med)*(get_graph_degree(graph)[k]/k_sum))*i_k  # r-nie 1+2
+            dikdt = (beta*k*q_i)*s_k-gamma*i_k  # r-nie 4
+            dikdt_tab.append(dikdt)  # i_k += dikdt
+
+        i_k = sum(dikdt_tab)  # ---
+        infected.append(i_k)
+
+    return infected
 
 if __name__ == "__main__":
     main()
