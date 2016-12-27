@@ -29,16 +29,25 @@ def main():
     graph = generate_graph(m_0, m, t)
     # print_graph(graph)
     degree = get_graph_degree(graph, True)
-    infected_vect = [i_k0 for d in degree] # warunek poczatkowy
+    infected_vect = [0 for d in degree] # warunek poczatkowy
+    m = 0
+    idx = 0
+    for i in range(len(degree)):
+    	if (degree[i] > m):
+    		m = degree[i]
+    		idx = i
+    print('max=',m,'idx=',idx)
+    infected_vect[idx] = i_k0
+
 
 
     # plot_graph(graph,graph_layout='spring')
     # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
 
-    t_0 = 10
-    sis = calculate_sis(infected_vect, beta, gamma, t_0, graph, degree)
+    t_0 = 500
+    sis,sis_inf = propagate_sis(infected_vect, beta, gamma, t_0, graph, degree)
     print('prawdop. ze wezel o stopniu k bedzie zarazony w chwili t=',t_0,': ',sis)
-
+    print('rozwiazanie rown.rozniczk.=',sis_inf)
 
     return
 
@@ -241,7 +250,7 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     return
 
 
-def calculate_sis(i_k, beta, gamma, t_max, graph, degrees):
+def propagate_sis(i_k, beta, gamma, t_max, graph, degrees):
     # Q_I = suma (Q(k)*i_k) # r-nie 1
     # Q(k) = k*P(k)/k_med # r-nie 2
     # Q_I = suma (k*P(k)/k_med)*i_k # r-nie 1+2
@@ -250,23 +259,26 @@ def calculate_sis(i_k, beta, gamma, t_max, graph, degrees):
     # [a, b, c]*[A, B, C] = [aA, bB, cC] -> rozkład * [0, 1, 2, ... max_degree]
     # q_i_k = []
 
-    s_k = [0 for i in i_k]
+    # s_k = [1 - i for i in i_k]
+    print('t_max=',t_max)
+    print('i_k=',i_k)
+
 
     k_sum = sum(degrees)
     print('ksum=',k_sum)
     k_med = sum(degrees) / len(degrees)
     print('kmed=',k_med)
+    Q_I = 0;
+    for k in range(len(degrees)):
+        Q_I += (k/k_med)*degrees[k]*i_k[k]
+    print('Q_I=',Q_I)
+
 
     for t in np.arange(t_max):
-        #s_k = 1 - i_k
-        # print('s_k:',s_k)
 
         dikdt_tab = [0 for i in i_k]  # wektor pochodnych
         for k in range(len(degrees)):
-            s_k[k] = 1 - i_k[k]
-            # print('s_k:',s_k)
-            q_i_k = (k/k_med)*degrees[k]*i_k[k]  # r-nie 1+2
-            dikdt = (beta*k*q_i_k)*s_k[k]-gamma*i_k[k]  # r-nie 4
+            dikdt = (beta*k*Q_I)*(1 - i_k[k]) - gamma*i_k[k]  # r-nie 4
             dikdt_tab[k] = dikdt
         # print('wektor pochodnych dla t=',t,':',dikdt_tab)
 
@@ -278,10 +290,18 @@ def calculate_sis(i_k, beta, gamma, t_max, graph, degrees):
             elif added < 0:
                 i_k[k] = 0
             else:
-                i_k[k] += dikdt_tab[k]
+                i_k[k] = added
+
+    # rozwiazanie rownania rozniczkowego:
+    i_k_inf = [0 for i in i_k]
+    for k in range(len(degrees)):
+    	lkq = (beta/gamma) * k * Q_I
+    	i_k_inf[k] = lkq / (1 + lkq)
 
 
-    return i_k
+
+    return i_k, i_k_inf
+
 
 if __name__ == "__main__":
     main()
