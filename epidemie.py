@@ -30,20 +30,26 @@ def main():
     beta = 0.03
     gamma = 0.05
 
-    graph = generate_graph(m_0, m, t)
+    graph = generate_graph(m_0, m, t, False)
     # print_graph(graph)
     degree = get_graph_degree(graph, True)
 
 
-    infected_vect = [0 for d in degree]  # warunek poczatkowy
-    m = 0
-    idx = 0
-    for i in range(len(degree)):
-        if degree[i] > m:
-            m = degree[i]
-            idx = i
-    print('max=', m, 'idx=', idx)
-    infected_vect[idx] = i_k0
+    # infected_vect = [0 for d in degree]  # warunek poczatkowy
+    # m = 0
+    # idx = 0
+    # for i in range(len(degree)):
+    #     if degree[i] > m:
+    #         m = degree[i]
+    #         idx = i
+    # print('max=', m, 'idx=', idx)
+    # infected_vect[idx] = i_k0
+
+    # celowe zarażenie:
+    infect(graph,2701); # losowy wezel
+    # policz i_k dla grafu:
+    infected_vect = calc_i_k(graph);
+    print('infected_vect=',infected_vect)
 
     # plot_graph(graph,graph_layout='spring')
     # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
@@ -72,7 +78,7 @@ def main():
 """
 
 
-def generate_graph(m_0, m, t):
+def generate_graph(m_0, m, t, print_g=False):
     print("Generowanie grafu dla: \n\tm_0 =", m_0, "\n\tm = ", m, "\n\tt =", t)
 
     # stworz wstepny graf (graf pełny - całkowicie połączony klaster węzłów):
@@ -80,11 +86,13 @@ def generate_graph(m_0, m, t):
     for m_i in range(0, m_0):
         l = [x+1 for x in range(m_0)]  # dodaj wszystkie wezly (indeksowanie od 1)
         del l[m_i]  # usun siebie
-        graph[m_i + 1] = (0, l)
+        graph[m_i + 1] = [0, l] # zrob liste
     # zapelniaj go:
     for t_i in range(0, t):
         pref_addition(graph, m)  # dodaj nowy wezel, ktory stworzy m polaczen (na koniec slownika)
 
+    if print_g:
+        print(graph)
     return graph
 
 
@@ -106,7 +114,7 @@ def pref_addition(g, m):
                 g[k][1].append(num_node)
                 break
     # updatuj graf (dodaj nowy wezel wraz z jego polaczeniami):
-    new_node = {num_node: (0, marked)}
+    new_node = {num_node: [0, marked]}
     g.update(new_node)
     return
 
@@ -275,7 +283,7 @@ def propagate_sis(i_k, beta, gamma, t_max, degrees):
     # s_k = [1 - i for i in i_k]
 
     # print('t_max=', t_max)
-    print('i_k=', i_k)
+    #print('i_k=', i_k)
 
     # k_sum = sum(degrees)
     # print('ksum=', k_sum)
@@ -334,6 +342,40 @@ def plot_infected(t_vec, infected_number, infected_max):
     plt.legend(loc=7)
     plt.show()
     return
+
+'''
+    celowe zarazenie wybranej osoby.
+    Zwraca wektor i_k dla calego grafu.
+'''
+def infect(graph,idx):
+    graph[idx][0] = 1;
+    return
+
+'''
+    liczenie wektora i_k dla calego grafu
+'''
+def calc_i_k(graph):
+    nodes_count = len(graph)
+    # wez max. stopien
+    max_deg = 0;
+    for k,v in graph.items():
+        if len(v[1]) > max_deg:
+            max_deg = len(v[1])
+    #print('max_deg=',max_deg)
+
+    # utworz tablice
+    I_k = np.zeros(max_deg + 1)
+    for k,v in graph.items():
+        if v[0] == 1:
+            I_k[len(v[1])] += 1
+    #print(I_k)
+
+    # zamien na prawdop.
+    i_k = [I / nodes_count for I in I_k]
+    return i_k
+
+
+
 
 if __name__ == "__main__":
     main()
