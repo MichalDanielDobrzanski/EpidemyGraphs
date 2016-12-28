@@ -19,35 +19,48 @@ def main():
     # generowanie grafu
     m_0 = 3
     m = 3  # Warunek: m <= m_0
-    t = 3500
+    t = 3500-m_0
+
+    total_nodes = t + m_0
 
     # parametry modelu SIS
-    i_k0 = 0.01
+    # i_k0 = 0.001
+    i_k_number = 1
+    i_k0 = i_k_number/total_nodes
     beta = 0.03
     gamma = 0.05
 
     graph = generate_graph(m_0, m, t)
     # print_graph(graph)
     degree = get_graph_degree(graph, True)
-    infected_vect = [0 for d in degree] # warunek poczatkowy
+
+
+    infected_vect = [0 for d in degree]  # warunek poczatkowy
     m = 0
     idx = 0
     for i in range(len(degree)):
-    	if (degree[i] > m):
-    		m = degree[i]
-    		idx = i
-    print('max=',m,'idx=',idx)
+        if degree[i] > m:
+            m = degree[i]
+            idx = i
+    print('max=', m, 'idx=', idx)
     infected_vect[idx] = i_k0
-
-
 
     # plot_graph(graph,graph_layout='spring')
     # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
 
-    t_0 = 500
-    sis,sis_inf = propagate_sis(infected_vect, beta, gamma, t_0, graph, degree)
-    print('prawdop. ze wezel o stopniu k bedzie zarazony w chwili t=',t_0,': ',sis)
-    print('rozwiazanie rown.rozniczk.=',sis_inf)
+    t_vec = [0]
+    infected_number = [i_k_number]
+    for j in range(50):
+        t_0 = j+1
+        sis, infected_vect, sis_num = propagate_sis(infected_vect, beta, gamma, t_0, degree)
+        # print('prawdop. ze wezel o stopniu k bedzie zakazony w chwili t=', t_0, ': ', sis)
+        # print('rozwiazanie rown.rozniczk.=', sis_inf)
+        print('liczba zakazonych wezlow o stopniu k w chwili t =', t_0, ': ', sis_num, '; razem:', sum(sis_num),
+              '/', total_nodes)
+        t_vec.append(t_0)
+        infected_number.append(sum(sis_num))
+
+    plot_infected(t_vec, infected_number, total_nodes)
 
     return
 
@@ -61,7 +74,7 @@ def main():
 
 def generate_graph(m_0, m, t):
     print("Generowanie grafu dla: \n\tm_0 =", m_0, "\n\tm = ", m, "\n\tt =", t)
-    
+
     # stworz wstepny graf (graf pełny - całkowicie połączony klaster węzłów):
     graph = dict()
     for m_i in range(0, m_0):
@@ -71,16 +84,16 @@ def generate_graph(m_0, m, t):
     # zapelniaj go:
     for t_i in range(0, t):
         pref_addition(graph, m)  # dodaj nowy wezel, ktory stworzy m polaczen (na koniec slownika)
-    
+
     return graph
-    
+
 
 def pref_addition(g, m):
-    num_node = len(g) + 1    
-    # wybierz wezly, do ktorych polaczy sie nowy wezel 
+    num_node = len(g) + 1
+    # wybierz wezly, do ktorych polaczy sie nowy wezel
     total_p = 0
     for v in g.values():
-        total_p += len(v) 
+        total_p += len(v)
     marked = []
     while len(marked) < m:
         p = random.randint(0, total_p)
@@ -91,7 +104,7 @@ def pref_addition(g, m):
                 marked.append(k)
                 # updatuj graf (do wczesniejszego wezla dodaj wskazanie na nowy tworzony):
                 g[k][1].append(num_node)
-                break 
+                break
     # updatuj graf (dodaj nowy wezel wraz z jego polaczeniami):
     new_node = {num_node: (0, marked)}
     g.update(new_node)
@@ -105,7 +118,7 @@ def get_graph_degree(g, print_deg=False):
         degree = len(v[1])
         if degree > max_degree:
             max_degree = degree
-    
+
     degrees = [0 for x in range(max_degree + 1)]
     for k, v in g.items():
         degree = len(v[1])
@@ -116,7 +129,7 @@ def get_graph_degree(g, print_deg=False):
 
     return degrees
 
- 
+
 # Utilities:
 def print_graph(g):
     print("Graf o", len(g), "wierzcholkach:")
@@ -131,15 +144,15 @@ def plot_graph(g, labels=None, graph_layout='shell',
                edge_color='blue', edge_alpha=0.3, edge_tickness=1,
                edge_text_pos=0.3,
                text_font='sans-serif'):
-         
+
     plt.figure(1)
     plt.title('Graficzne przedstawienie grafu')
-    
+
     G = nx.Graph()
-    
+
     for k, v in g.items():
         G.add_node(k)
-        
+
     for k, v in g.items():
         for i in range(0, len(v[1])):
             G.add_edge(k, v[1][i])
@@ -250,7 +263,7 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     return
 
 
-def propagate_sis(i_k, beta, gamma, t_max, graph, degrees):
+def propagate_sis(i_k, beta, gamma, t_max, degrees):
     # Q_I = suma (Q(k)*i_k) # r-nie 1
     # Q(k) = k*P(k)/k_med # r-nie 2
     # Q_I = suma (k*P(k)/k_med)*i_k # r-nie 1+2
@@ -260,19 +273,18 @@ def propagate_sis(i_k, beta, gamma, t_max, graph, degrees):
     # q_i_k = []
 
     # s_k = [1 - i for i in i_k]
-    print('t_max=',t_max)
-    print('i_k=',i_k)
 
+    # print('t_max=', t_max)
+    print('i_k=', i_k)
 
-    k_sum = sum(degrees)
-    print('ksum=',k_sum)
+    # k_sum = sum(degrees)
+    # print('ksum=', k_sum)
     k_med = sum(degrees) / len(degrees)
-    print('kmed=',k_med)
-    Q_I = 0;
+    # print('kmed=', k_med)
+    Q_I = 0
     for k in range(len(degrees)):
         Q_I += (k/k_med)*degrees[k]*i_k[k]
-    print('Q_I=',Q_I)
-
+    # print('Q_I=', Q_I)
 
     for t in np.arange(t_max):
 
@@ -295,13 +307,33 @@ def propagate_sis(i_k, beta, gamma, t_max, graph, degrees):
     # rozwiazanie rownania rozniczkowego:
     i_k_inf = [0 for i in i_k]
     for k in range(len(degrees)):
-    	lkq = (beta/gamma) * k * Q_I
-    	i_k_inf[k] = lkq / (1 + lkq)
+        lkq = (beta/gamma) * k * Q_I
+        i_k_inf[k] = lkq / (1 + lkq)
+
+    i_k_num = (np.round(np.array(i_k_inf)*degrees)).astype(int).tolist()
+
+    return i_k, i_k_inf, i_k_num
 
 
+def plot_infected(t_vec, infected_number, infected_max):
 
-    return i_k, i_k_inf
+    plt.figure(3)
+    plt.title(r'Liczba zainfekowanych (I) w czasie, do chwili $t=%d$' % t_vec[-1])
+    plt.ylabel('I')
+    plt.xlabel('t')
+    plt.axis([-t_vec[-1]*0.05, t_vec[-1]*1.05, -infected_max*0.05, infected_max*1.05])
+    plt.grid(True)
 
+    susceptible_number = (infected_max-np.array(infected_number)).tolist()
+    print('infected =', infected_number)
+    print('susceptible =', susceptible_number)
+    print('time vector =', t_vec)
+    plt.plot(t_vec, infected_number, label='zainfekowani', linewidth=2)
+    plt.plot(t_vec, susceptible_number, label='zdrowi', linewidth=2)
+
+    plt.legend(loc=7)
+    plt.show()
+    return
 
 if __name__ == "__main__":
     main()
