@@ -28,7 +28,7 @@ def main():
     i_k_number = 1
     i_k0 = i_k_number/total_nodes
     beta = 0.03
-    gamma = 0.05
+    gamma = 0.01
 
     graph = generate_graph(m_0, m, t, False)
     # print_graph(graph)
@@ -46,10 +46,11 @@ def main():
     # infected_vect[idx] = i_k0
 
     # celowe zarażenie:
-    infect(graph,2701); # losowy wezel
+    infect(graph,1); # losowy wezel
     # policz i_k dla grafu:
     infected_vect = calc_i_k(graph);
     print('infected_vect=',infected_vect)
+
 
     # plot_graph(graph,graph_layout='spring')
     # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
@@ -57,16 +58,24 @@ def main():
     t_vec = [0]
     infected_number = [i_k_number]
     for j in range(50):
-        t_0 = j+1
-        sis, infected_vect, sis_num = propagate_sis(infected_vect, beta, gamma, t_0, degree)
-        # print('prawdop. ze wezel o stopniu k bedzie zakazony w chwili t=', t_0, ': ', sis)
+        t = j+1
+        sis, infected_vect, sis_num = propagate_sis(infected_vect, beta, gamma, t, degree)
+        print('t=',t)
+      
+        # print('prawdop. ze wezel o stopniu k bedzie zakazony w chwili t=', t, ': ', sis)
         # print('rozwiazanie rown.rozniczk.=', sis_inf)
-        print('liczba zakazonych wezlow o stopniu k w chwili t =', t_0, ': ', sis_num, '; razem:', sum(sis_num),
+
+        print('liczba zakazonych wezlow o stopniu k w chwili t =', t, ': ', sis_num, '; razem:', sum(sis_num),
               '/', total_nodes)
-        t_vec.append(t_0)
+
+        t_vec.append(t)
         infected_number.append(sum(sis_num))
 
     plot_infected(t_vec, infected_number, total_nodes)
+
+    print('SYMULACJA:')
+    infected_vect_sim = simulate_sis(graph, beta, gamma, 300)
+    print('infected_vect_sim=',infected_vect_sim)
 
     return
 
@@ -375,6 +384,23 @@ def calc_i_k(graph):
     return i_k
 
 
+def toss(prob):
+    if random.uniform(0, 1) > prob:
+        return False
+    return True
+
+def simulate_sis(graph, beta, gamma, t_max):
+    for t in np.arange(t_max):
+        for k,v in graph.items():
+            # chorzy zdrowieja
+            if v[0] == 1 and toss(gamma):
+                v[0] = 0
+            # zdrowi sie zarazaja od sasiada (sasiadow)
+            if v[0] == 0:
+                for adj in v[1]:
+                    if graph[adj][0] == 1 and toss(beta):
+                        v[0] = 1
+    return calc_i_k(graph)
 
 
 if __name__ == "__main__":
