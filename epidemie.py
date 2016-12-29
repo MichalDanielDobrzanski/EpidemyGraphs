@@ -35,7 +35,7 @@ def main():
     graph = generate_graph(m_0, m, t)
     # print_graph(graph)
     # plot_graph(graph,graph_layout='spring')
-    degree = get_graph_degree(graph, True)
+    degrees = get_graph_degree(graph, True)
     # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
 
 
@@ -54,15 +54,15 @@ def main():
     print(bcolors.BOLD + 't_max = ' +  str(t_max) + bcolors.ENDC)
 
     # wylicz rownania rozniczkowe:
-    infected_vect = propagate_sis(infected_vect, beta, gamma, t_max, degree)
+    infected_vect = propagate_sis(infected_vect, beta, gamma, t_max, degrees)
     print(bcolors.HEADER + 'teoria: ' + bcolors.ENDC  + 'infected_vect=',infected_vect)
 
     # rozwiaz rownanie rozniczkowe w t=niesk.:
-    infected_vect_inf = infinite_sis(infected_vect, beta, gamma, degree)
+    infected_vect_inf = infinite_sis(infected_vect, beta, gamma, degrees)
     print(bcolors.OKGREEN + 'teoria(w niesk.): ' + bcolors.ENDC  + 'infected_vect=',infected_vect_inf)
 
     # przeprowadz symulacje:
-    infected_vect_sim = simulate_sis(graph, beta, gamma, t_max, degree)
+    infected_vect_sim = simulate_sis(graph, beta, gamma, t_max, degrees)
     print(bcolors.OKBLUE + 'symulacja: ' + bcolors.ENDC  + 'infected_vect=',infected_vect_sim)
 
     # print('lengths=',len(infected_vect),len(infected_vect_inf),len(infected_vect_sim))
@@ -273,10 +273,11 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
 '''
 def propagate_sis(i_k, beta, gamma, t_max, degrees):
 
-    Q_I = calc_Q_I(degrees,i_k)
-
     # symuluj:
     for t in np.arange(t_max):
+
+        Q_I = calc_Q_I(degrees,i_k)
+
         dikdt_tab = [0 for i in i_k]
         for k in range(len(degrees)):
             dikdt = (beta*k*Q_I)*(1 - i_k[k]) - gamma*i_k[k]
@@ -331,7 +332,15 @@ def simulate_sis(graph, beta, gamma, t_max, degrees):
     wyliczanie Q_I
 '''
 def calc_Q_I(degrees,i_k):
-    k_med = sum(degrees) / len(degrees)
+    N = sum(degrees)
+    k_sum = 0
+    i = 0
+    for d in degrees:
+        k_sum += i * d
+        i += 1
+    #print('ksum=',k_sum)
+    k_med = k_sum / N
+    #print('k_med=',k_med)
     Q_I = 0
     for k in range(len(degrees)):
         Q_I += (k/k_med)*degrees[k]*i_k[k]
