@@ -19,7 +19,7 @@ def main():
     # generowanie grafu
     m_0 = 3
     m = 3  # Warunek: m <= m_0
-    t = 3500-m_0
+    t = 3400-m_0
 
     total_nodes = t + m_0
 
@@ -30,7 +30,7 @@ def main():
     beta = 0.03
     gamma = 0.01
 
-    graph = generate_graph(m_0, m, t, False)
+    graph = generate_graph(m_0, m, t)
     # print_graph(graph)
     degree = get_graph_degree(graph, True)
 
@@ -71,11 +71,14 @@ def main():
         t_vec.append(t)
         infected_number.append(sum(sis_num))
 
-    plot_infected(t_vec, infected_number, total_nodes)
+    # plot_infected(t_vec, infected_number, total_nodes)
 
     print('SYMULACJA:')
-    infected_vect_sim = simulate_sis(graph, beta, gamma, 300)
-    print('infected_vect_sim=',infected_vect_sim)
+    infected_vect_sim = simulate_sis(graph, beta, gamma, 40)
+    print('infected_vect_simulation=',infected_vect_sim)
+
+    # print_graph(graph)
+    #plot_graph(graph)
 
     return
 
@@ -87,7 +90,7 @@ def main():
 """
 
 
-def generate_graph(m_0, m, t, print_g=False):
+def generate_graph(m_0, m, t):
     print("Generowanie grafu dla: \n\tm_0 =", m_0, "\n\tm = ", m, "\n\tt =", t)
 
     # stworz wstepny graf (graf pełny - całkowicie połączony klaster węzłów):
@@ -99,9 +102,6 @@ def generate_graph(m_0, m, t, print_g=False):
     # zapelniaj go:
     for t_i in range(0, t):
         pref_addition(graph, m)  # dodaj nowy wezel, ktory stworzy m polaczen (na koniec slownika)
-
-    if print_g:
-        print(graph)
     return graph
 
 
@@ -379,14 +379,25 @@ def calc_i_k(graph):
             I_k[len(v[1])] += 1
     #print(I_k)
 
+    degree = get_graph_degree(graph)
     # zamien na prawdop.
-    i_k = [I / nodes_count for I in I_k]
+    i_k = np.zeros(len(I_k))
+    for d in range(len(degree)):
+        if degree[d] != 0:
+            i_k[d] = I_k[d] / degree[d]
+        else:
+            i_k[d] = 0
+
+        
     return i_k
 
 
 def toss(prob):
-    if random.uniform(0, 1) > prob:
+    val = random.uniform(0, 1)
+    # print('val=',val)
+    if val > prob:
         return False
+    
     return True
 
 def simulate_sis(graph, beta, gamma, t_max):
@@ -394,11 +405,13 @@ def simulate_sis(graph, beta, gamma, t_max):
         for k,v in graph.items():
             # chorzy zdrowieja
             if v[0] == 1 and toss(gamma):
+                # print('node',k,'recured')
                 v[0] = 0
             # zdrowi sie zarazaja od sasiada (sasiadow)
             if v[0] == 0:
                 for adj in v[1]:
                     if graph[adj][0] == 1 and toss(beta):
+                        # print('node',k,'got sick.')
                         v[0] = 1
     return calc_i_k(graph)
 
