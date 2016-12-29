@@ -375,7 +375,6 @@ def plot_infected(t_vec, infected_number, infected_max):
 
 '''
     celowe zarazenie wybranej osoby.
-    Zwraca wektor i_k dla calego grafu.
 '''
 def infect(graph,idx):
     graph[idx][0] = 1;
@@ -386,7 +385,7 @@ def infect(graph,idx):
 '''
 def calc_i_k(graph):
     nodes_count = len(graph)
-    degree = get_graph_degree(graph)
+    degrees = get_graph_degree(graph)
     # wez max. stopien
     max_deg = 0;
     for k,v in graph.items():
@@ -395,17 +394,17 @@ def calc_i_k(graph):
     #print('max_deg=',max_deg)
 
     # utworz tablice
-    I_k = np.zeros(len(degree))
+    I_k = np.zeros(len(degrees))
     for k,v in graph.items():
         if v[0] == 1:
             I_k[len(v[1])] += 1
     #print(I_k)
 
     # zamien na prawdop.
-    i_k = np.zeros(len(degree))
-    for d in range(len(degree)):
-        if degree[d] != 0:
-            i_k[d] = I_k[d] / degree[d]
+    i_k = [0 for d in degrees]
+    for d in range(len(degrees)):
+        if degrees[d] != 0:
+            i_k[d] = I_k[d] / degrees[d]
         else:
             i_k[d] = 0
     return i_k
