@@ -66,7 +66,7 @@ def main():
     print(bcolors.OKBLUE + 'symulacja: ' + bcolors.ENDC  + 'infected_vect_t_max=',infected_vect_sim[t_max - 1])
 
     # print('lengths=',len(infected_vect),len(infected_vect_inf),len(infected_vect_sim))
-    max_plots = 4
+    max_plots = 1
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
@@ -286,11 +286,14 @@ def propagate_sis(i_k, beta, gamma, t_max, degrees):
     for t in np.arange(t_max):
 
         Q_I = calc_Q_I(degrees,i_k)
+        # print('Q_I=',Q_I)
 
         dikdt_tab = [0 for i in i_k]
         for k in range(len(degrees)):
             dikdt = (beta*k*Q_I)*(1 - i_k[k]) - gamma*i_k[k]
             dikdt_tab[k] = dikdt
+
+        # print('deriv table t=',t, " : ",dikdt_tab)
 
         # update pochodnych:
         for k in range(len(degrees)):
@@ -352,17 +355,19 @@ def simulate_sis(graph, beta, gamma, t_max, degrees):
 '''
 def calc_Q_I(degrees,i_k):
     N = sum(degrees)
+    # print('N=',N)
     k_sum = 0
     i = 0
     for d in degrees:
         k_sum += i * d
         i += 1
-    #print('ksum=',k_sum)
-    k_med = k_sum / N
-    #print('k_med=',k_med)
+    # print('ksum=',k_sum)
+    k_med = k_sum / N # <k> = 2*E/N
+    # print('k_med=',k_med)
     Q_I = 0
     for k in range(len(degrees)):
-        Q_I += (k/k_med)*degrees[k]*i_k[k]
+        # print('Q_k',(k/k_med) * degrees[k] / N)
+        Q_I += ((k/k_med) * (degrees[k] / N) * i_k[k])
     return Q_I
 
 
@@ -406,8 +411,8 @@ def plot_sis(t, infected_vect_calc, infected_vect_sim, beta, gamma, k):
 
     plt.figure(k + 10)
     plt.title(r'Prawdopodobienstwo infekcji $i_{%d}(t)$ do chwili $t=%d$ dla $\beta=%f$, $\gamma=%f$' % (k,t,beta,gamma))
-    plt.ylabel(r'i_%d' % k)
-    plt.xlabel('t')
+    plt.ylabel(r'$i_{%d}$' % k)
+    plt.xlabel(r'$t$')
     plt.grid(True)
     
     t_vec = range(t)
