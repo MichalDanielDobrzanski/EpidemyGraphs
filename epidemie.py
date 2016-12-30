@@ -40,8 +40,8 @@ def main():
 
 
     # parametry modelu SIS
-    beta = 0.03
-    gamma = 0.01
+    beta = 0.04 # zarazanie
+    gamma = 0.03 # zdrowienie
 
     # celowe zarażenie:
     infect(graph,64); # losowy wezel
@@ -50,22 +50,29 @@ def main():
     infected_vect = calc_i_k(graph);
     print(bcolors.WARNING + 'poczatkowy stan sieci: ' + bcolors.ENDC + 'infected_vect=',infected_vect)
 
-    t_max = 100
+    t_max = 200
     print(bcolors.BOLD + 't_max = ' +  str(t_max) + bcolors.ENDC)
 
     # wylicz rownania rozniczkowe:
-    infected_vect = propagate_sis(infected_vect, beta, gamma, t_max, degrees)
-    print(bcolors.HEADER + 'teoria: ' + bcolors.ENDC  + 'infected_vect=',infected_vect)
+    infected_vect_calc = propagate_sis(infected_vect, beta, gamma, t_max, degrees)
+    print(bcolors.HEADER + 'teoria: ' + bcolors.ENDC  + 'infected_vect_t_max=',infected_vect_calc[t_max - 1])
 
     # rozwiaz rownanie rozniczkowe w t=niesk.:
     infected_vect_inf = infinite_sis(infected_vect, beta, gamma, degrees)
-    print(bcolors.OKGREEN + 'teoria(w niesk.): ' + bcolors.ENDC  + 'infected_vect=',infected_vect_inf)
+    print(bcolors.OKGREEN + 'teoria(w niesk.): ' + bcolors.ENDC  + 'infected_vect_inf=',infected_vect_inf)
 
     # przeprowadz symulacje:
     infected_vect_sim = simulate_sis(graph, beta, gamma, t_max, degrees)
-    print(bcolors.OKBLUE + 'symulacja: ' + bcolors.ENDC  + 'infected_vect=',infected_vect_sim)
+    print(bcolors.OKBLUE + 'symulacja: ' + bcolors.ENDC  + 'infected_vect_t_max=',infected_vect_sim[t_max - 1])
 
     # print('lengths=',len(infected_vect),len(infected_vect_inf),len(infected_vect_sim))
+    max_plots = 4
+    d = 0
+    for i in degrees:
+        if i != 0 and max_plots > 0:
+            plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d) # dla wezla o stopniu 4
+            max_plots -= 1
+        d += 1
 
     return
 
@@ -273,6 +280,8 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
 '''
 def propagate_sis(i_k, beta, gamma, t_max, degrees):
 
+    i_k_vec = []
+
     # symuluj:
     for t in np.arange(t_max):
 
@@ -293,7 +302,10 @@ def propagate_sis(i_k, beta, gamma, t_max, degrees):
             else:
                 i_k[k] = added
 
-    return trim_zeros(i_k,degrees)
+        # dodaj do wektora
+        i_k_vec.append(trim_zeros(i_k,degrees))
+
+    return i_k_vec
 
 '''
     teoria - rozwiazanie rownania rozniczkowego w nieskonczonosci
@@ -313,6 +325,9 @@ def infinite_sis(i_k, beta, gamma, degrees):
      symulacja - porpagacja epidemii zmieniajac stany wierzcholkow grafow zgodnie z p-nstwem.
 '''
 def simulate_sis(graph, beta, gamma, t_max, degrees):
+
+    i_k_vec = []
+
     for t in np.arange(t_max):
         for k,v in graph.items():
             # chorzy zdrowieja
@@ -325,7 +340,11 @@ def simulate_sis(graph, beta, gamma, t_max, degrees):
                     if graph[adj][0] == 1 and toss(beta):
                         # print('node',k,'got sick.')
                         v[0] = 1
-    return trim_zeros(calc_i_k(graph),degrees)
+
+        # dodaj do wektora
+        i_k_vec.append(trim_zeros(calc_i_k(graph),degrees))
+
+    return i_k_vec
 
 
 ''' 
@@ -381,6 +400,27 @@ def plot_infected(t_vec, infected_number, infected_max):
     plt.legend(loc=7)
     plt.show()
     return
+
+
+def plot_sis(t, infected_vect_calc, infected_vect_sim, beta, gamma, k):
+
+    plt.figure(k + 10)
+    plt.title(r'Prawdopodobienstwo infekcji $i_{%d}(t)$ do chwili $t=%d$ dla $\beta=%f$, $\gamma=%f$' % (k,t,beta,gamma))
+    plt.ylabel(r'i_%d' % k)
+    plt.xlabel('t')
+    plt.grid(True)
+    
+    t_vec = range(t)
+    calc_vec = [i[k] for i in infected_vect_calc]
+    sim_vec = [i[k] for i in infected_vect_sim]
+
+    plt.plot(t_vec, calc_vec, label='rownanie rozniczkowe', linewidth=2)
+    plt.plot(t_vec, sim_vec, label='symulacja', linewidth=2, marker='o', ls='')
+
+    plt.legend(loc=7)
+    plt.show()
+    return
+
 
 '''
     celowe zarazenie wybranej osoby.
