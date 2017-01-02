@@ -11,9 +11,10 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
-import random
+from random import randint, uniform
 
-class bcolors:
+
+class BColors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -23,54 +24,62 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def main():
 
     # generowanie grafu
-    m_0 = 3
-    m = 3  # Warunek: m <= m_0
-    t = 3400-m_0
+    total_nodes = 3400  # calkowita liczba wierzcholkow
+    m_0 = 3  # liczba wierzcholkow w poczatkowym grafie pelnym
+    m = 3  # liczba polaczen tworzonych z istniejacym grafem przez kazdy nowy wierzcholek, warunek: m <= m_0
+    t = total_nodes-m_0  # liczba wierzcholkow do dodania (krokow generowania grafu)
 
-    total_nodes = t + m_0
-
-    graph = generate_graph(m_0, m, t)
-    # print_graph(graph)
-    # plot_graph(graph,graph_layout='spring')
+    graph = generate_graph(m_0, m, t)  # generowanie grafu
+    print_graph(graph)  # wypisanie grafu w konsoli
     degrees = get_graph_degree(graph, True)
-    # plot_graph_degree(graph, m_0, m, t, n_graphs=1)
 
+    # plot_graph(graph, graph_layout='spring')
+    # rysowanie grafu (graficzne przedstawienie, nie warto dla duzych grafow)
+    # plot_graph_degree(graph, m_0, m, t, n_graphs=1)  # rysowanie wykresu z rozkladem stopni wiercholkow grafu graph
 
     # parametry modelu SIS
-    beta = 0.04 # zarazanie
-    gamma = 0.03 # zdrowienie
+    beta = 0.04  # zakazanie
+    gamma = 0.03  # zdrowienie
 
-    # celowe zarażenie:
-    infect(graph,64); # losowy wezel
+    # celowe zakazenie:
+    # infect(graph, randint(0, total_nodes))  # losowy wezel
+    infect(graph, 64)  # losowy wezel
 
     # policz i_k dla grafu:
-    infected_vect = calc_i_k(graph);
-    print(bcolors.WARNING + 'poczatkowy stan sieci: ' + bcolors.ENDC + 'infected_vect=',infected_vect)
+    infected_vect = calc_i_k(graph)
+    print(BColors.WARNING + 'poczatkowy stan sieci: ' + BColors.ENDC + 'infected_vect=', infected_vect)
 
     t_max = 200
-    print(bcolors.BOLD + 't_max = ' +  str(t_max) + bcolors.ENDC)
+    print(BColors.BOLD + 't_max = ' + str(t_max) + BColors.ENDC)
 
     # wylicz rownania rozniczkowe:
     infected_vect_calc = propagate_sis(infected_vect, beta, gamma, t_max, degrees)
-    print(bcolors.HEADER + 'teoria: ' + bcolors.ENDC  + 'infected_vect_t_max=',infected_vect_calc[t_max - 1])
+    print(BColors.HEADER + 'teoria: ' + BColors.ENDC + 'infected_vect_t_max=', infected_vect_calc[t_max - 1])
 
     # rozwiaz rownanie rozniczkowe w t=niesk.:
     infected_vect_inf = infinite_sis(infected_vect, beta, gamma, degrees)
-    print(bcolors.OKGREEN + 'teoria(w niesk.): ' + bcolors.ENDC  + 'infected_vect_inf=',infected_vect_inf)
+    print(BColors.OKGREEN + 'teoria(w niesk.): ' + BColors.ENDC + 'infected_vect_inf=', infected_vect_inf)
 
     # przeprowadz symulacje:
     infected_vect_sim = simulate_sis(graph, beta, gamma, t_max, degrees)
-    print(bcolors.OKBLUE + 'symulacja: ' + bcolors.ENDC  + 'infected_vect_t_max=',infected_vect_sim[t_max - 1])
+    print(BColors.OKBLUE + 'symulacja: ' + BColors.ENDC + 'infected_vect_t_max=', infected_vect_sim[t_max - 1])
 
-    # print('lengths=',len(infected_vect),len(infected_vect_inf),len(infected_vect_sim))
-    max_plots = 1
+    # przeprowadz symulacje 2:
+    n_sim = 5
+    infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
+    print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
+          'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
+
+    max_plots = 4
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
-            plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d) # dla wezla o stopniu 4
+            plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
+            plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
             max_plots -= 1
         d += 1
 
@@ -80,7 +89,6 @@ def main():
     m_0 - liczba wierzcholkow w poczatkowym grafie pelnym
     m - ile polaczen ma utworzyc nowo dodany wierzcholek
     t - zadana chwila czasowa
-
 """
 
 
@@ -92,7 +100,7 @@ def generate_graph(m_0, m, t):
     for m_i in range(0, m_0):
         l = [x+1 for x in range(m_0)]  # dodaj wszystkie wezly (indeksowanie od 1)
         del l[m_i]  # usun siebie
-        graph[m_i + 1] = [0, l] # zrob liste
+        graph[m_i + 1] = [0, l]  # zrob liste
     # zapelniaj go:
     for t_i in range(0, t):
         pref_addition(graph, m)  # dodaj nowy wezel, ktory stworzy m polaczen (na koniec slownika)
@@ -107,11 +115,11 @@ def pref_addition(g, m):
         total_p += len(v)
     marked = []
     while len(marked) < m:
-        p = random.randint(0, total_p)
+        p = randint(0, total_p)
         cum_p = 0
         for k, v in g.items():
             cum_p += len(v)
-            if (not k in marked) and (p <= cum_p):
+            if (k not in marked) and (p <= cum_p):
                 marked.append(k)
                 # updatuj graf (do wczesniejszego wezla dodaj wskazanie na nowy tworzony):
                 g[k][1].append(num_node)
@@ -130,7 +138,7 @@ def get_graph_degree(g, print_deg=False):
         if degree > max_degree:
             max_degree = degree
 
-    degrees = [0 for x in range(max_degree + 1)]
+    degrees = [0 for _ in range(max_degree + 1)]
     for k, v in g.items():
         degree = len(v[1])
         degrees[degree] += 1
@@ -150,40 +158,38 @@ def print_graph(g):
     return
 
 
-def plot_graph(g, labels=None, graph_layout='shell',
-               node_size=200, node_color='blue', node_alpha=0.3,
-               node_text_size=12,
-               edge_color='blue', edge_alpha=0.3, edge_tickness=1,
-               edge_text_pos=0.3,
-               text_font='sans-serif'):
+def plot_graph(g, graph_layout='shell', node_size=200, node_color='blue',
+               node_alpha=0.3,  node_text_size=12, edge_color='blue',
+               edge_alpha=0.3, edge_tickness=1, text_font='sans-serif'):
+    #  labels=None, edge_text_pos=0.3,
 
     plt.figure(1)
     plt.title('Graficzne przedstawienie grafu')
 
-    G = nx.Graph()
+    g2 = nx.Graph()
 
     for k, v in g.items():
-        G.add_node(k)
+        g2.add_node(k)
 
     for k, v in g.items():
         for i in range(0, len(v[1])):
-            G.add_edge(k, v[1][i])
+            g2.add_edge(k, v[1][i])
 
     if graph_layout == 'spring':
-        graph_pos = nx.spring_layout(G)
+        graph_pos = nx.spring_layout(g2)
     elif graph_layout == 'spectral':
-        graph_pos = nx.spectral_layout(G)
+        graph_pos = nx.spectral_layout(g2)
     elif graph_layout == 'random':
-        graph_pos = nx.random_layout(G)
+        graph_pos = nx.random_layout(g2)
     else:
-        graph_pos = nx.shell_layout(G)
+        graph_pos = nx.shell_layout(g2)
         
     # draw
-    nx.draw_networkx_nodes(G, graph_pos, node_size=node_size,
+    nx.draw_networkx_nodes(g2, graph_pos, node_size=node_size,
                            alpha=node_alpha, node_color=node_color)
-    nx.draw_networkx_edges(G, graph_pos, width=edge_tickness,
+    nx.draw_networkx_edges(g2, graph_pos, width=edge_tickness,
                            alpha=edge_alpha, edge_color=edge_color)
-    nx.draw_networkx_labels(G, graph_pos, font_size=node_text_size,
+    nx.draw_networkx_labels(g2, graph_pos, font_size=node_text_size,
                             font_family=text_font)
            
     plt.show()
@@ -197,13 +203,14 @@ usrednianie rozkladu stopnia wierzcholka na podstawie kilku grafow
 def average_graph_degree(degrees, n_graphs, m_0, m, t):
     if n_graphs > 1:
         for i in range(n_graphs):
+            print("Graf numer: ", i)
             gr = generate_graph(m_0, m, t)
             degs = get_graph_degree(gr)
             # zamien rozklad na prawdopodobienstwa
             degs = [x / sum(degs) for x in degs]
 
             # wybierz wiekszy rozklad
-            l_degs = s_degs = []
+            # l_degs = s_degs = []
             if len(degs) > len(degrees):
                 l_degs = degs
                 s_degs = degrees
@@ -212,8 +219,8 @@ def average_graph_degree(degrees, n_graphs, m_0, m, t):
                 s_degs = degs
 
             # iteruj po mniejszym
-            for i in range(len(s_degs)):
-                l_degs[i] += s_degs[i]
+            for j in range(len(s_degs)):
+                l_degs[j] += s_degs[j]
 
             degrees = l_degs
 
@@ -251,8 +258,8 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     # rozklady odniesienia:
     offset = (int(max_degree * (1 - ref_length))) // 2
     x = np.arange(offset, max_degree - offset)
-    y = [0 for i in range(max_degree - 2*offset)]
-    y_alpha = [0 for i in range(max_degree - 2*offset)]
+    y = [0 for _ in range(max_degree - 2*offset)]
+    y_alpha = [0 for _ in range(max_degree - 2*offset)]
     for x_i in x:
         # rozklad referencyjny:
         y[x_i - offset] = (2 * m * m / (x_i * x_i * x_i))
@@ -274,23 +281,24 @@ def plot_graph_degree(g, m_0, m, t, n_graphs=5, alpha=3, ref_length=0.8):
     plt.show()
     return
 
-
 '''
      teoria - propagacja epidemii obliczjac pochodna
 '''
+
+
 def propagate_sis(i_k, beta, gamma, t_max, degrees):
 
     i_k_vec = []
 
     # symuluj:
-    for t in np.arange(t_max):
+    for _ in np.arange(t_max):
 
-        Q_I = calc_Q_I(degrees,i_k)
+        q_i = calc_q_i(degrees, i_k)
         # print('Q_I=',Q_I)
 
-        dikdt_tab = [0 for i in i_k]
+        dikdt_tab = [0 for _ in i_k]
         for k in range(len(degrees)):
-            dikdt = (beta*k*Q_I)*(1 - i_k[k]) - gamma*i_k[k]
+            dikdt = (beta*k*q_i)*(1 - i_k[k]) - gamma*i_k[k]
             dikdt_tab[k] = dikdt
 
         # print('deriv table t=',t, " : ",dikdt_tab)
@@ -306,55 +314,75 @@ def propagate_sis(i_k, beta, gamma, t_max, degrees):
                 i_k[k] = added
 
         # dodaj do wektora
-        i_k_vec.append(trim_zeros(i_k,degrees))
+        i_k_vec.append(trim_zeros(i_k, degrees))
 
     return i_k_vec
 
 '''
     teoria - rozwiazanie rownania rozniczkowego w nieskonczonosci
 '''
+
+
 def infinite_sis(i_k, beta, gamma, degrees):
 
-    Q_I = calc_Q_I(degrees,i_k)
+    q_i = calc_q_i(degrees, i_k)
 
-    i_k_inf = [0 for d in degrees]
+    i_k_inf = [0 for _ in degrees]
     for k in range(len(degrees)):
-        lkq = (beta/gamma) * k * Q_I
+        lkq = (beta/gamma) * k * q_i
         i_k_inf[k] = lkq / (1 + lkq)
 
-    return trim_zeros(i_k_inf,degrees)
+    return trim_zeros(i_k_inf, degrees)
 
 '''
      symulacja - porpagacja epidemii zmieniajac stany wierzcholkow grafow zgodnie z p-nstwem.
 '''
+
+
 def simulate_sis(graph, beta, gamma, t_max, degrees):
-
     i_k_vec = []
-
-    for t in np.arange(t_max):
-        for k,v in graph.items():
+    for _ in np.arange(t_max):
+        for k, v in graph.items():
             # chorzy zdrowieja
             if v[0] == 1 and toss(gamma):
                 # print('node',k,'recured')
                 v[0] = 0
-            # zdrowi sie zarazaja od sasiada (sasiadow)
+            # sasiad (sasiedzi) zakaza zdrowych
             if v[0] == 0:
                 for adj in v[1]:
                     if graph[adj][0] == 1 and toss(beta):
                         # print('node',k,'got sick.')
                         v[0] = 1
-
         # dodaj do wektora
-        i_k_vec.append(trim_zeros(calc_i_k(graph),degrees))
+        i_k_vec.append(trim_zeros(calc_i_k(graph), degrees))
 
     return i_k_vec
 
+'''
+    symulacja - usredniona dla n_sims powtorzen
+'''
+
+
+def simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sims=1):
+    i_k_vec_av = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
+    if n_sims > 1:
+        for _ in np.arange(n_sims-1):
+            heal_all(graph)
+            # infect(graph, randint(0, len(graph)))
+            infect(graph, 64)
+            i_k_vec = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
+            i_k_vec_av += i_k_vec
+        i_k_vec_av /= n_sims
+
+    return i_k_vec_av.tolist()
 
 ''' 
     wyliczanie Q_I
 '''
-def calc_Q_I(degrees,i_k):
-    N = sum(degrees)
+
+
+def calc_q_i(degrees, i_k):
+    n = sum(degrees)
     # print('N=',N)
     k_sum = 0
     i = 0
@@ -362,21 +390,23 @@ def calc_Q_I(degrees,i_k):
         k_sum += i * d
         i += 1
     # print('ksum=',k_sum)
-    k_med = k_sum / N # <k> = 2*E/N
+    k_med = k_sum / n  # <k> = 2*E/n
     # print('k_med=',k_med)
-    Q_I = 0
+    q_i = 0
     for k in range(len(degrees)):
-        # print('Q_k',(k/k_med) * degrees[k] / N)
-        Q_I += ((k/k_med) * (degrees[k] / N) * i_k[k])
-    return Q_I
+        # print('Q_k',(k/k_med) * degrees[k] / n)
+        q_i += ((k/k_med) * (degrees[k] / n) * i_k[k])
+    return q_i
 
 
 '''
     Braki w rozkladzie reprezentuj jako -1
 '''
-def trim_zeros(i_k,degrees):
+
+
+def trim_zeros(i_k, degrees):
     i_k_trim = []
-    i_k_inf_trim = []
+    # i_k_inf_trim = []
     idx = 0
     for d in degrees:
         if d == 0:
@@ -385,6 +415,7 @@ def trim_zeros(i_k,degrees):
             i_k_trim.append(i_k[idx])
         idx += 1
     return i_k_trim
+
 
 def plot_infected(t_vec, infected_number, infected_max):
 
@@ -410,7 +441,8 @@ def plot_infected(t_vec, infected_number, infected_max):
 def plot_sis(t, infected_vect_calc, infected_vect_sim, beta, gamma, k):
 
     plt.figure(k + 10)
-    plt.title(r'Prawdopodobienstwo infekcji $i_{%d}(t)$ do chwili $t=%d$ dla $\beta=%f$, $\gamma=%f$' % (k,t,beta,gamma))
+    plt.title(r'Prawdopodobienstwo infekcji $i_{%d}(t)$ do chwili $t=%d$ dla $\beta=%f$, $\gamma=%f$'
+              % (k, t, beta, gamma))
     plt.ylabel(r'$i_{%d}$' % k)
     plt.xlabel(r'$t$')
     plt.grid(True)
@@ -428,44 +460,59 @@ def plot_sis(t, infected_vect_calc, infected_vect_sim, beta, gamma, k):
 
 
 '''
-    celowe zarazenie wybranej osoby.
+    celowe zakazenie wybranej osoby.
 '''
-def infect(graph,idx):
-    graph[idx][0] = 1;
+
+
+def infect(graph, idx):
+    graph[idx][0] = 1
     return
+
+'''
+    wyleczenie populacji
+'''
+
+
+def heal_all(graph):
+    for idx in np.arange(len(graph)):
+        graph[idx+1][0] = 0  # graph[:][0] = 0 nie dziala :(
+    return
+
 
 '''
     liczenie wektora i_k dla calego grafu
 '''
+
+
 def calc_i_k(graph):
-    nodes_count = len(graph)
+    # nodes_count = len(graph)
     degrees = get_graph_degree(graph)
     # wez max. stopien
-    max_deg = 0;
-    for k,v in graph.items():
+    max_deg = 0
+    for k, v in graph.items():
         if len(v[1]) > max_deg:
             max_deg = len(v[1])
-    #print('max_deg=',max_deg)
+    # print('max_deg=',max_deg)
 
     # utworz tablice
-    I_k = np.zeros(len(degrees))
-    for k,v in graph.items():
+    i_k_val = np.zeros(len(degrees))
+    for k, v in graph.items():
         if v[0] == 1:
-            I_k[len(v[1])] += 1
-    #print(I_k)
+            i_k_val[len(v[1])] += 1
+    # print(i_k_val)
 
     # zamien na prawdop.
-    i_k = [0 for d in degrees]
+    i_k_prob = [0 for _ in degrees]
     for d in range(len(degrees)):
         if degrees[d] != 0:
-            i_k[d] = I_k[d] / degrees[d]
+            i_k_prob[d] = i_k_val[d] / degrees[d]
         else:
-            i_k[d] = 0
-    return i_k
+            i_k_prob[d] = 0
+    return i_k_prob
 
 
 def toss(prob):
-    val = random.uniform(0, 1)
+    val = uniform(0, 1)
     # print('val=',val)
     if val > prob:
         return False
