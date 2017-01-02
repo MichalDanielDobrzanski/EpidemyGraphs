@@ -26,12 +26,19 @@ class BColors:
 
 
 def main():
-
-    # generowanie grafu
+    # generowanie grafu - parametry
     total_nodes = 3400  # calkowita liczba wierzcholkow
     m_0 = 3  # liczba wierzcholkow w poczatkowym grafie pelnym
     m = 3  # liczba polaczen tworzonych z istniejacym grafem przez kazdy nowy wierzcholek, warunek: m <= m_0
     t = total_nodes-m_0  # liczba wierzcholkow do dodania (krokow generowania grafu)
+    n_graphs = 1
+
+    # parametry modelu SIS
+    beta = 0.04  # zakazanie
+    gamma = 0.03  # zdrowienie
+    t_max = 200
+    n_sim = 25
+    max_plots = 4
 
     graph = generate_graph(m_0, m, t)  # generowanie grafu
     print_graph(graph)  # wypisanie grafu w konsoli
@@ -39,11 +46,7 @@ def main():
 
     # plot_graph(graph, graph_layout='spring')
     # rysowanie grafu (graficzne przedstawienie, nie warto dla duzych grafow)
-    # plot_graph_degree(graph, m_0, m, t, n_graphs=1)  # rysowanie wykresu z rozkladem stopni wiercholkow grafu graph
-
-    # parametry modelu SIS
-    beta = 0.04  # zakazanie
-    gamma = 0.03  # zdrowienie
+    plot_graph_degree(graph, m_0, m, t, n_graphs)  # rysowanie wykresu z rozkladem stopni wierzcholkow grafu graph
 
     # celowe zakazenie:
     # infect(graph, randint(0, total_nodes))  # losowy wezel
@@ -53,7 +56,6 @@ def main():
     infected_vect = calc_i_k(graph)
     print(BColors.WARNING + 'poczatkowy stan sieci: ' + BColors.ENDC + 'infected_vect=', infected_vect)
 
-    t_max = 200
     print(BColors.BOLD + 't_max = ' + str(t_max) + BColors.ENDC)
 
     # wylicz rownania rozniczkowe:
@@ -69,12 +71,10 @@ def main():
     print(BColors.OKBLUE + 'symulacja: ' + BColors.ENDC + 'infected_vect_t_max=', infected_vect_sim[t_max - 1])
 
     # przeprowadz symulacje 2:
-    n_sim = 5
     infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
     print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
           'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
 
-    max_plots = 4
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
