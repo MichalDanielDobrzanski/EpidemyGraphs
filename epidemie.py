@@ -58,8 +58,8 @@ def main():
     print(BColors.WARNING + 'poczatkowy stan sieci: ' + BColors.ENDC + 'infected_vect=', infected_vect)
 
     # policz gamma c:
-    gamma_c_sim, gamma_c_the = calc_gamma_c(graph, degrees, infected_vect, sick_node)
-    print(BColors.OKBLUE + '\t gamma_c_sim = ' + str(gamma_c_sim) + ',\n\t gamma_c_the = ' + str(gamma_c_the) + ",\n\t gamma = " + str(beta/gamma) + BColors.ENDC)
+    lambda_c_sim, lambda_c_the = calc_lambda_c(graph, degrees, infected_vect, sick_node)
+    print(BColors.OKBLUE + '\t lambda_c_sim = ' + str(lambda_c_sim) + ',\n\t lambda_c_the = ' + str(lambda_c_the) + ",\n\t lambda = " + str(beta/gamma) + BColors.ENDC)
 
     print(BColors.BOLD + 't_max = ' + str(t_max) + BColors.ENDC)
 
@@ -518,10 +518,10 @@ def calc_i_k(graph):
 
 
 '''
-    gamma c z symulacji i teoretyczne
+    lambda c z symulacji i teoretyczne
 '''
 
-def calc_gamma_c(graph, degrees, i_k, node_idx):
+def calc_lambda_c(graph, degrees, i_k, node_idx):
     deg = len(graph[node_idx][1])
     i_k_value = i_k[deg]
 
@@ -532,9 +532,9 @@ def calc_gamma_c(graph, degrees, i_k, node_idx):
         k_sum += i * d
         i += 1
     k_med = k_sum / n
-    gamma_c_sim = 1 / (k_med * (1 - i_k_value))
-    gamma_c_the = k_med / (k_med * k_med)
-    return gamma_c_sim, gamma_c_the
+    lambda_c_sim = 1 / (k_med * (1 - i_k_value))
+    lambda_c_the = k_med / (k_med * k_med)
+    return lambda_c_sim, lambda_c_the
 
 
 def toss(prob):
