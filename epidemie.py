@@ -41,20 +41,25 @@ def main():
     max_plots = 4
 
     graph = generate_graph(m_0, m, t)  # generowanie grafu
-    print_graph(graph)  # wypisanie grafu w konsoli
+    # print_graph(graph)  # wypisanie grafu w konsoli
     degrees = get_graph_degree(graph, True)
 
     # plot_graph(graph, graph_layout='spring')
     # rysowanie grafu (graficzne przedstawienie, nie warto dla duzych grafow)
-    plot_graph_degree(graph, m_0, m, t, n_graphs)  # rysowanie wykresu z rozkladem stopni wierzcholkow grafu graph
+    # plot_graph_degree(graph, m_0, m, t, n_graphs)  # rysowanie wykresu z rozkladem stopni wierzcholkow grafu graph
 
     # celowe zakazenie:
     # infect(graph, randint(0, total_nodes))  # losowy wezel
-    infect(graph, 64)  # losowy wezel
+    sick_node = 64
+    infect(graph, sick_node)  # losowy wezel
 
     # policz i_k dla grafu:
     infected_vect = calc_i_k(graph)
     print(BColors.WARNING + 'poczatkowy stan sieci: ' + BColors.ENDC + 'infected_vect=', infected_vect)
+
+    # policz gamma c:
+    gamma_c_sim, gamma_c_the = calc_gamma_c(graph, degrees, infected_vect, sick_node)
+    print(BColors.OKBLUE + '\t gamma_c_sim = ' + str(gamma_c_sim) + ',\n\t gamma_c_the = ' + str(gamma_c_the) + ",\n\t gamma = " + str(beta/gamma) + BColors.ENDC)
 
     print(BColors.BOLD + 't_max = ' + str(t_max) + BColors.ENDC)
 
@@ -71,15 +76,16 @@ def main():
     print(BColors.OKBLUE + 'symulacja: ' + BColors.ENDC + 'infected_vect_t_max=', infected_vect_sim[t_max - 1])
 
     # przeprowadz symulacje 2:
-    infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
-    print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
-          'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
+    # infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
+    # print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
+    #       'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
+
 
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
             plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
-            plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
+            # plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
             max_plots -= 1
         d += 1
 
@@ -509,6 +515,26 @@ def calc_i_k(graph):
         else:
             i_k_prob[d] = 0
     return i_k_prob
+
+
+'''
+    gamma c z symulacji i teoretyczne
+'''
+
+def calc_gamma_c(graph, degrees, i_k, node_idx):
+    deg = len(graph[node_idx][1])
+    i_k_value = i_k[deg]
+
+    n = sum(degrees)
+    k_sum = 0
+    i = 0
+    for d in degrees:
+        k_sum += i * d
+        i += 1
+    k_med = k_sum / n
+    gamma_c_sim = 1 / (k_med * (1 - i_k_value))
+    gamma_c_the = k_med / (k_med * k_med)
+    return gamma_c_sim, gamma_c_the
 
 
 def toss(prob):
