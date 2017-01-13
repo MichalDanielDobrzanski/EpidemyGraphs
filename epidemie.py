@@ -31,7 +31,7 @@ def main():
     m_0 = 3  # liczba wierzcholkow w poczatkowym grafie pelnym
     m = 3  # liczba polaczen tworzonych z istniejacym grafem przez kazdy nowy wierzcholek, warunek: m <= m_0
     t = total_nodes-m_0  # liczba wierzcholkow do dodania (krokow generowania grafu)
-    n_graphs = 1
+    n_graphs = 5
 
     # parametry modelu SIS
     beta = 0.04  # zakazanie
@@ -41,11 +41,13 @@ def main():
     max_plots = 4
 
     graph = generate_graph(m_0, m, t)  # generowanie grafu
-    # print_graph(graph)  # wypisanie grafu w konsoli
+    print_graph(graph)  # wypisanie grafu w konsoli
     degrees = get_graph_degree(graph, True)
 
-    plot_graph(graph, graph_layout='spring')  # rysowanie grafu
+    plot_graph(graph, graph_layout='spring')  # rysowanie grafu - czasochlonne
     plot_graph_degree(graph, m_0, m, t, n_graphs)  # rysowanie wykresu z rozkladem stopni wierzcholkow grafu graph
+
+    # return
 
     # celowe zakazenie:
     # infect(graph, randint(0, total_nodes))  # losowy wezel
@@ -89,6 +91,7 @@ def main():
         d += 1
 
     return
+
 
 """
     m_0 - liczba wierzcholkow w poczatkowym grafie pelnym
@@ -213,7 +216,7 @@ def average_graph_degree(degrees, n_graphs, m_0, m, t):
             degs = get_graph_degree(gr)
             # zamien rozklad na prawdopodobienstwa
             degs = [x / sum(degs) for x in degs]
-
+            print('degs', degs)
             # wybierz wiekszy rozklad
             # l_degs = s_degs = []
             if len(degs) > len(degrees):
