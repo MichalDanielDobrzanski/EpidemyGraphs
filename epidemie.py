@@ -74,11 +74,11 @@ def main():
     print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
           'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
 
-    max_plots = 4
+    max_plots = 1
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
-            plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
+            # plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
             plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
             max_plots -= 1
         d += 1
@@ -365,14 +365,18 @@ def simulate_sis(graph, beta, gamma, t_max, degrees):
 
 def simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sims=1):
     i_k_vec_av = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
+    # print('av[6]=',i_k_vec_av[6])
     if n_sims > 1:
         for _ in np.arange(n_sims-1):
             heal_all(graph)
             # infect(graph, randint(0, len(graph)))
             infect(graph, 64)
             i_k_vec = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
-            i_k_vec_av += i_k_vec
-        i_k_vec_av /= n_sims
+            print('i_k_vec_iter=',i_k_vec[8])
+            i_k_vec_av = np.add(i_k_vec_av, i_k_vec)
+            print('i_k_vec_sum=',i_k_vec_av[8])
+        i_k_vec_av = np.divide(i_k_vec_av,n_sims)
+        print('i_k_vec_aver=',i_k_vec_av[8])
 
     return i_k_vec_av.tolist()
 
