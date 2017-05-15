@@ -26,34 +26,43 @@ class BColors:
 
 
 def main():
-
-    # generowanie grafu
+    # generowanie grafu - parametry
     total_nodes = 3400  # calkowita liczba wierzcholkow
     m_0 = 3  # liczba wierzcholkow w poczatkowym grafie pelnym
     m = 3  # liczba polaczen tworzonych z istniejacym grafem przez kazdy nowy wierzcholek, warunek: m <= m_0
     t = total_nodes-m_0  # liczba wierzcholkow do dodania (krokow generowania grafu)
+    n_graphs = 5
+
+    # parametry modelu SIS
+    beta = 0.04  # zakazanie
+    gamma = 0.03  # zdrowienie
+    t_max = 200
+    # n_sim = 25
+    max_plots = 4
 
     graph = generate_graph(m_0, m, t)  # generowanie grafu
     print_graph(graph)  # wypisanie grafu w konsoli
     degrees = get_graph_degree(graph, True)
 
-    # plot_graph(graph, graph_layout='spring')
-    # rysowanie grafu (graficzne przedstawienie, nie warto dla duzych grafow)
-    # plot_graph_degree(graph, m_0, m, t, n_graphs=1)  # rysowanie wykresu z rozkladem stopni wiercholkow grafu graph
+    plot_graph(graph, graph_layout='spring')  # rysowanie grafu - czasochlonne
+    plot_graph_degree(graph, m_0, m, t, n_graphs)  # rysowanie wykresu z rozkladem stopni wierzcholkow grafu graph
 
-    # parametry modelu SIS
-    beta = 0.04  # zakazanie
-    gamma = 0.03  # zdrowienie
+    # return
 
     # celowe zakazenie:
     # infect(graph, randint(0, total_nodes))  # losowy wezel
-    infect(graph, 64)  # losowy wezel
+    sick_node = 64
+    infect(graph, sick_node)  # losowy wezel
 
     # policz i_k dla grafu:
     infected_vect = calc_i_k(graph)
     print(BColors.WARNING + 'poczatkowy stan sieci: ' + BColors.ENDC + 'infected_vect=', infected_vect)
 
-    t_max = 200
+    # policz gamma c:
+    lambda_c_sim, lambda_c_the = calc_lambda_c(graph, degrees, infected_vect, sick_node)
+    print(BColors.OKBLUE + '\t lambda_c_sim = ' + str(lambda_c_sim) + ',\n\t lambda_c_the = ' + str(lambda_c_the) +
+          ",\n\t lambda = " + str(beta/gamma) + BColors.ENDC)
+
     print(BColors.BOLD + 't_max = ' + str(t_max) + BColors.ENDC)
 
     # wylicz rownania rozniczkowe:
@@ -69,21 +78,21 @@ def main():
     print(BColors.OKBLUE + 'symulacja: ' + BColors.ENDC + 'infected_vect_t_max=', infected_vect_sim[t_max - 1])
 
     # przeprowadz symulacje 2:
-    n_sim = 5
-    infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
-    print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
-          'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
+    # infected_vect_sim_av = list(simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sim))
+    # print(BColors.OKBLUE + (r'symulacja 2 (średnia z %d symulacji): ' % n_sim) + BColors.ENDC +
+    #       'infected_vect_t_max=', infected_vect_sim_av[t_max - 1])
 
-    max_plots = 1
+    max_plots = 4
     d = 0
     for i in degrees:
         if i != 0 and max_plots > 0:
-            # plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
-            plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
+            plot_sis(t_max, infected_vect_calc, infected_vect_sim, beta, gamma, d)  # dla wezla o stopniu 4
+            # plot_sis(t_max, infected_vect_calc, infected_vect_sim_av, beta, gamma, d)  # dla wezla o stopniu 4
             max_plots -= 1
         d += 1
 
     return
+
 
 """
     m_0 - liczba wierzcholkow w poczatkowym grafie pelnym
@@ -208,7 +217,7 @@ def average_graph_degree(degrees, n_graphs, m_0, m, t):
             degs = get_graph_degree(gr)
             # zamien rozklad na prawdopodobienstwa
             degs = [x / sum(degs) for x in degs]
-
+            print('degs', degs)
             # wybierz wiekszy rozklad
             # l_degs = s_degs = []
             if len(degs) > len(degrees):
@@ -358,27 +367,23 @@ def simulate_sis(graph, beta, gamma, t_max, degrees):
 
     return i_k_vec
 
-'''
-    symulacja - usredniona dla n_sims powtorzen
-'''
-
-
-def simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sims=1):
-    i_k_vec_av = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
-    # print('av[6]=',i_k_vec_av[6])
-    if n_sims > 1:
-        for _ in np.arange(n_sims-1):
-            heal_all(graph)
-            # infect(graph, randint(0, len(graph)))
-            infect(graph, 64)
-            i_k_vec = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
-            print('i_k_vec_iter=',i_k_vec[8])
-            i_k_vec_av = np.add(i_k_vec_av, i_k_vec)
-            print('i_k_vec_sum=',i_k_vec_av[8])
-        i_k_vec_av = np.divide(i_k_vec_av,n_sims)
-        print('i_k_vec_aver=',i_k_vec_av[8])
-
-    return i_k_vec_av.tolist()
+# '''
+#     symulacja - usredniona dla n_sims powtorzen
+# '''
+#
+#
+# def simulate_average_sis(graph, beta, gamma, t_max, degrees, n_sims=1):
+#     i_k_vec_av = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
+#     if n_sims > 1:
+#         for _ in np.arange(n_sims-1):
+#             heal_all(graph)
+#             # infect(graph, randint(0, len(graph)))
+#             infect(graph, 64)
+#             i_k_vec = np.array(simulate_sis(graph, beta, gamma, t_max, degrees))
+#             i_k_vec_av += i_k_vec
+#         i_k_vec_av /= n_sims
+#
+#     return i_k_vec_av.tolist()
 
 ''' 
     wyliczanie Q_I
@@ -421,25 +426,25 @@ def trim_zeros(i_k, degrees):
     return i_k_trim
 
 
-def plot_infected(t_vec, infected_number, infected_max):
-
-    plt.figure(3)
-    plt.title(r'Liczba zainfekowanych (I) w czasie, do chwili $t=%d$' % t_vec[-1])
-    plt.ylabel('I')
-    plt.xlabel('t')
-    plt.axis([-t_vec[-1]*0.05, t_vec[-1]*1.05, -infected_max*0.05, infected_max*1.05])
-    plt.grid(True)
-
-    susceptible_number = (infected_max-np.array(infected_number)).tolist()
-    print('infected =', infected_number)
-    print('susceptible =', susceptible_number)
-    print('time vector =', t_vec)
-    plt.plot(t_vec, infected_number, label='zainfekowani', linewidth=2)
-    plt.plot(t_vec, susceptible_number, label='zdrowi', linewidth=2)
-
-    plt.legend(loc=7)
-    plt.show()
-    return
+# def plot_infected(t_vec, infected_number, infected_max):
+#
+#     plt.figure(3)
+#     plt.title(r'Liczba zainfekowanych (I) w czasie, do chwili $t=%d$' % t_vec[-1])
+#     plt.ylabel('I')
+#     plt.xlabel('t')
+#     plt.axis([-t_vec[-1]*0.05, t_vec[-1]*1.05, -infected_max*0.05, infected_max*1.05])
+#     plt.grid(True)
+#
+#     susceptible_number = (infected_max-np.array(infected_number)).tolist()
+#     print('infected =', infected_number)
+#     print('susceptible =', susceptible_number)
+#     print('time vector =', t_vec)
+#     plt.plot(t_vec, infected_number, label='zainfekowani', linewidth=2)
+#     plt.plot(t_vec, susceptible_number, label='zdrowi', linewidth=2)
+#
+#     plt.legend(loc=7)
+#     plt.show()
+#     return
 
 
 def plot_sis(t, infected_vect_calc, infected_vect_sim, beta, gamma, k):
@@ -513,6 +518,27 @@ def calc_i_k(graph):
         else:
             i_k_prob[d] = 0
     return i_k_prob
+
+
+'''
+    lambda c z symulacji i teoretyczne
+'''
+
+
+def calc_lambda_c(graph, degrees, i_k, node_idx):
+    deg = len(graph[node_idx][1])
+    i_k_value = i_k[deg]
+
+    n = sum(degrees)
+    k_sum = 0
+    i = 0
+    for d in degrees:
+        k_sum += i * d
+        i += 1
+    k_med = k_sum / n
+    lambda_c_sim = 1 / (k_med * (1 - i_k_value))
+    lambda_c_the = k_med / (k_med * k_med)
+    return lambda_c_sim, lambda_c_the
 
 
 def toss(prob):
